@@ -1,0 +1,81 @@
+{
+  "sequential_1": {
+    "p0": "Red",
+    "p1": "Red",
+    "p2": "Red",
+    "p3": "Red",
+    "p4": "Blue",
+    "p5": "Blue",
+    "p6": "Blue",
+    "p7": "Red"
+  },
+  "sequential_2": {
+    "p0": "Red",
+    "p1": "Red",
+    "p2": "Red",
+    "p3": "Red",
+    "p4": "Red",
+    "p5": "Blue",
+    "p6": "Red",
+    "p7": "Red"
+  },
+  "sequential_3": {
+    "p0": "Blue",
+    "p1": "Blue",
+    "p2": "Red",
+    "p3": "Blue",
+    "p4": "Red",
+    "p5": "Red",
+    "p6": "Blue",
+    "p7": "Red"
+  },
+  "sequential_4": {
+    "p0": "Blue",
+    "p1": "Red",
+    "p2": "Red",
+    "p3": "Red",
+    "p4": "Red",
+    "p5": "Blue",
+    "p6": "Red",
+    "p7": "Red"
+  },
+  "sequential_5": {
+    "p0": "Blue",
+    "p1": "Blue",
+    "p2": "Blue",
+    "p3": "Blue",
+    "p4": "Red",
+    "p5": "Red",
+    "p6": "Red",
+    "p7": "Red"
+  },
+  "sequential_6": {
+    "p0": "Blue",
+    "p1": "Red",
+    "p2": "Red",
+    "p3": "Red",
+    "p4": "Red",
+    "p5": "Red",
+    "p6": "Blue",
+    "p7": "Blue"
+  },
+  "simultaneous": {
+    "p0": "Red",
+    "p1": "Red",
+    "p2": "Red",
+    "p3": "Blue",
+    "p4": "Blue",
+    "p5": "Red",
+    "p6": "Blue",
+    "p7": "Red",
+    "p8": "Red",
+    "p9": "Blue",
+    "p10": "Red",
+    "p11": "Red",
+    "p12": "Red",
+    "p13": "Blue",
+    "p14": "Blue",
+    "p15": "Red",
+    "p16": "Blue"
+  }
+}
