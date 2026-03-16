@@ -254,6 +254,98 @@
     /* Screens */
     .screen { display: none; }
     .screen.active { display: block; }
+
+    /* ── Results panel ───────────────────────────────── */
+    .results-body {
+      max-width: 960px;
+      width: 100%;
+      padding: 28px 16px 48px;
+    }
+    .results-header {
+      margin-bottom: 28px;
+    }
+    .results-header h1 { font-size: 1.5rem; font-weight: 700; color: #111827; }
+    .results-header .subtitle { font-size: 0.88rem; color: #6b7280; margin-top: 4px; }
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .results-group-card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px 20px 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    }
+    .results-group-card.simultaneous {
+      grid-column: 1 / -1;
+    }
+    .rg-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+    .rg-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    .rg-table th {
+      text-align: left;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #9ca3af;
+      padding: 0 6px 8px 6px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .rg-table td {
+      padding: 7px 6px;
+      border-bottom: 1px solid #f9fafb;
+      color: #374151;
+      vertical-align: middle;
+    }
+    .rg-table tr:last-child td { border-bottom: none; }
+    .sig-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+    }
+    .sig-dot {
+      width: 11px; height: 11px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .sig-red  { background: #ef4444; }
+    .sig-blue { background: #3b82f6; }
+    .choice-a { color: #b45309; font-weight: 700; }
+    .choice-b { color: #1d4ed8; font-weight: 700; }
+    .choice-pending { color: #d1d5db; font-style: italic; }
+    .auto-badge {
+      font-size: 0.65rem;
+      background: #fef3c7;
+      color: #92400e;
+      border-radius: 4px;
+      padding: 1px 5px;
+      margin-left: 4px;
+      font-weight: 600;
+    }
+    .live-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      margin-right: 6px;
+      animation: pulse 1.6s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+    }
   </style>
 </head>
 <body>
@@ -270,6 +362,11 @@
       <div class="section-label">Auto-advance Timeline</div>
       <table class="timeline-table" id="timeline-table"></table>
     </div>
+  </div>
+
+  <!-- ═══ SCREEN R — Results (URL: ?results) ══════════ -->
+  <div id="screen-results" class="screen">
+    <div id="results-root"></div>
   </div>
 
   <!-- ═══ SCREEN 1 — Entry ════════════════════════════ -->
@@ -403,8 +500,9 @@ let countdownSecs         = DECISION_TIMEOUT_SECS;
 let countdownMaxSecs      = DECISION_TIMEOUT_SECS; // may be reduced to meet global deadline
 let experimentStart       = null;   // set when instructor clicks Start
 
-// Detect instructor mode via ?instructor in URL
+// Detect instructor / results mode via URL params
 const isInstructor = new URLSearchParams(window.location.search).has('instructor');
+const isResults    = new URLSearchParams(window.location.search).has('results');
 
 // ════════════════════════════════════════════════════════
 // Init
@@ -424,7 +522,10 @@ db.ref('meta/experiment_start').on('value', snap => {
 setInterval(checkDeadlines, 10000);
 
 // Show correct initial screen
-if (isInstructor) {
+if (isResults) {
+  showScreen('screen-results');
+  initResults();
+} else if (isInstructor) {
   showScreen('screen-instructor');
 } else {
   showScreen('screen-entry');
@@ -449,6 +550,80 @@ function fromDb(data, i) { return (data && data[dbKey(i)]) || null; }
 
 function fmtTime(ts) {
   return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+// ════════════════════════════════════════════════════════
+// SCREEN R — Results
+// ════════════════════════════════════════════════════════
+function initResults() {
+  // Widen the card for the results view
+  document.querySelector('.card').style.maxWidth = '960px';
+
+  const root = document.getElementById('results-root');
+  root.innerHTML = `
+    <div class="results-header">
+      <h1><span class="live-dot"></span>Experiment Results</h1>
+      <div class="subtitle">Live — updates automatically as students submit decisions.</div>
+    </div>
+    <div class="results-grid" id="results-grid"></div>`;
+
+  const groups = Object.keys(GROUP_CONFIG);
+  const state  = {}; // groupKey -> { signals: {}, decisions: {} }
+
+  groups.forEach(gk => {
+    state[gk] = { signals: {}, decisions: {} };
+    // subscribe to signals (read-once is fine but live is consistent)
+    db.ref('signals/' + gk).on('value', snap => {
+      state[gk].signals = snap.val() || {};
+      renderResultsGrid(state);
+    });
+    // subscribe to decisions live
+    db.ref('experiment/' + gk).on('value', snap => {
+      state[gk].decisions = snap.val() || {};
+      renderResultsGrid(state);
+    });
+  });
+}
+
+function renderResultsGrid(state) {
+  const grid = document.getElementById('results-grid');
+  if (!grid) return;
+  const groups = Object.keys(GROUP_CONFIG);
+  grid.innerHTML = groups.map(gk => {
+    const size = GROUP_CONFIG[gk];
+    const sigs = state[gk].signals;
+    const decs = state[gk].decisions;
+    const isSim = gk === 'simultaneous';
+    const rows = Array.from({ length: size }, (_, i) => {
+      const key = 'p' + i;
+      const sig = sigs[key] || null;
+      const dec = decs[key] || null;
+      const sigHtml = sig
+        ? `<span class="sig-pill"><span class="sig-dot sig-${sig.toLowerCase()}"></span>${sig}</span>`
+        : `<span class="choice-pending">—</span>`;
+      let choiceHtml;
+      if (!dec) {
+        choiceHtml = `<span class="choice-pending">pending</span>`;
+      } else {
+        const label = dec.action === 'A' ? 'Urn A' : 'Urn B';
+        const cls   = dec.action === 'A' ? 'choice-a' : 'choice-b';
+        const auto  = dec.auto ? `<span class="auto-badge">auto</span>` : '';
+        choiceHtml  = `<span class="${cls}">${label}</span>${auto}`;
+      }
+      return `<tr><td>${i + 1}</td><td>${sigHtml}</td><td>${choiceHtml}</td></tr>`;
+    }).join('');
+
+    const decided = Object.keys(decs).length;
+    const pct = Math.round(decided / size * 100);
+    return `
+      <div class="results-group-card${isSim ? ' simultaneous' : ''}">
+        <div class="rg-title">${groupLabel(gk)} &nbsp;·&nbsp; ${decided}/${size} decided</div>
+        <table class="rg-table">
+          <thead><tr><th>Player</th><th>Signal</th><th>Choice</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }).join('');
 }
 
 // ════════════════════════════════════════════════════════
