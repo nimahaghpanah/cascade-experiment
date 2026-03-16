@@ -98,7 +98,7 @@
       margin-bottom: 14px;
     }
 
-    /* ── Instructor screen ───────────────────────────── */
+    /* ââ Instructor screen âââââââââââââââââââââââââââââ */
     .timeline-table {
       width: 100%;
       border-collapse: collapse;
@@ -134,7 +134,7 @@
       line-height: 1.5;
     }
 
-    /* ── Waiting screen ──────────────────────────────── */
+    /* ââ Waiting screen ââââââââââââââââââââââââââââââââ */
     .wait-title { font-size: 1.05rem; font-weight: 600; color: #111827; margin-bottom: 5px; }
 
     .spinner-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
@@ -168,10 +168,10 @@
     }
     .dot-pending { background: #f3f4f6; color: #9ca3af; }
     .dot-done    { background: #d1fae5; color: #065f46; }
-    .dot-auto    { background: #fef9c3; color: #854d0e; }
+    .dot-auto    { background: #d1fae5; color: #065f46; }
     .dot-me      { background: #dbeafe; color: #1d4ed8; outline: 2px solid #3b82f6; }
 
-    /* ── Decision screen ─────────────────────────────── */
+    /* ââ Decision screen âââââââââââââââââââââââââââââââ */
     .dec-title { font-size: 1.05rem; font-weight: 600; color: #111827; margin-bottom: 20px; }
 
     .prior-box {
@@ -255,7 +255,7 @@
     .screen { display: none; }
     .screen.active { display: block; }
 
-    /* ── Results panel ───────────────────────────────── */
+    /* ââ Results panel âââââââââââââââââââââââââââââââââ */
     .results-body {
       max-width: 960px;
       width: 100%;
@@ -323,8 +323,8 @@
     }
     .sig-red  { background: #ef4444; }
     .sig-blue { background: #3b82f6; }
-    .choice-a { color: #b45309; font-weight: 700; }
-    .choice-b { color: #1d4ed8; font-weight: 700; }
+    .choice-a { color: #1d4ed8; font-weight: 700; }  /* Blue Urn */
+    .choice-b { color: #dc2626; font-weight: 700; }  /* Red Urn */
     .choice-pending { color: #d1d5db; font-style: italic; }
     .auto-badge {
       font-size: 0.65rem;
@@ -351,602 +351,199 @@
 <body>
 <div class="card">
 
-  <!-- ═══ SCREEN 0 — Instructor (URL: ?instructor) ════ -->
+  <!-- âââ SCREEN 0 â Instructor (URL: ?instructor) ââââ -->
   <div id="screen-instructor" class="screen">
     <div class="eyebrow">Instructor View</div>
     <h1>Information Cascade</h1>
-    <p class="subtitle">Click Start when students are ready. Each sequential position will auto-advance if no decision is made within its allotted minute.</p>
+    <p class="subtitle">Click Start when students are ready. Each sequential position will auto-advance if no decision is made within 30 seconds.</p>
     <div id="exp-running-banner" style="display:none;" class="exp-running-msg"></div>
-    <button class="btn-primary" id="btn-start" onclick="instructorStart()">Start Experiment →</button>
+    <button class="btn-primary" id="btn-start" onclick="instructorStart()">Start Experiment â</button>
     <div id="instructor-timeline" style="margin-top:24px; display:none;">
       <div class="section-label">Auto-advance Timeline</div>
       <table class="timeline-table" id="timeline-table"></table>
     </div>
   </div>
 
-  <!-- ═══ SCREEN R — Results (URL: ?results) ══════════ -->
-  <div id="screen-results" class="screen">
-    <div id="results-root"></div>
-  </div>
-
-  <!-- ═══ SCREEN 1 — Entry ════════════════════════════ -->
-  <div id="screen-entry" class="screen">
-    <div class="eyebrow">MBA Experiment</div>
-    <h1>Information Cascade</h1>
-    <p class="subtitle">Enter your information exactly as it appears on your sheet.</p>
-
-    <label class="field-label" for="group-select">Your Group</label>
-    <select id="group-select">
-      <option value="">— Select your group —</option>
-      <option value="sequential_1">Sequential Group 1</option>
-      <option value="sequential_2">Sequential Group 2</option>
-      <option value="sequential_3">Sequential Group 3</option>
-      <option value="sequential_4">Sequential Group 4</option>
-      <option value="sequential_5">Sequential Group 5</option>
-      <option value="sequential_6">Sequential Group 6</option>
-      <option value="simultaneous">Simultaneous Group</option>
-    </select>
-
-    <label class="field-label" for="position-input">Your Position Number</label>
-    <input type="number" id="position-input" min="1" max="17" placeholder="e.g., 3">
-
-    <div id="entry-error" class="error-msg"></div>
-    <button class="btn-primary" onclick="startExperiment()">Enter →</button>
-  </div>
-
-  <!-- ═══ SCREEN 2 — Waiting ══════════════════════════ -->
-  <div id="screen-waiting" class="screen">
-    <div class="wait-title" id="wait-title"></div>
-    <div style="margin-bottom:24px;"></div>
-    <div class="spinner-row">
-      <div class="spinner"></div>
-      <div class="wait-msg" id="wait-msg"></div>
-    </div>
-    <div class="section-label">Group Progress</div>
-    <div class="progress-dots" id="progress-dots"></div>
-  </div>
-
-  <!-- ═══ SCREEN 3 — Decision ═════════════════════════ -->
-  <div id="screen-decision" class="screen">
-    <div class="dec-title" id="dec-title"></div>
-
-    <div class="prior-section" id="prior-section"></div>
-
-    <div class="signal-section">
-      <div class="section-label">Your Private Signal</div>
-      <div class="signal-display" id="signal-display">
-        <span class="signal-missing">Loading…</span>
-      </div>
-    </div>
-
-    <div class="countdown-wrap" id="countdown-wrap">
-      <div class="countdown-num" id="countdown-num">30</div>
-      <div class="countdown-right">
-        <div class="countdown-label" id="countdown-label">seconds to decide</div>
-        <div class="countdown-track">
-          <div class="countdown-fill" id="countdown-fill" style="width:100%"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="section-label">Your Decision</div>
-    <div class="urn-hint">Urn A: 2 red, 1 blue &nbsp;·&nbsp; Urn B: 2 blue, 1 red</div>
-    <div class="urn-buttons">
-      <button class="btn-urn" id="btn-a" onclick="submitDecision('A')">Urn A</button>
-      <button class="btn-urn" id="btn-b" onclick="submitDecision('B')">Urn B</button>
-    </div>
-    <div class="decision-error" id="dec-error"></div>
-  </div>
-
-  <!-- ═══ SCREEN 4 — Thank you ════════════════════════ -->
-  <div id="screen-thanks" class="screen">
-    <div class="thanks-wrap">
-      <div class="thanks-icon">✓</div>
-      <div class="thanks-title">Thank you!</div>
-      <div class="thanks-sub">Your decision has been recorded.</div>
-    </div>
-  </div>
-
-</div><!-- /.card -->
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script>
-// ════════════════════════════════════════════════════════
-// Firebase config
-// ════════════════════════════════════════════════════════
-const firebaseConfig = {
-  apiKey:            "AIzaSyBpZcHGN5qwxCnEL0dgrArjZC3oiD3mtZI",
-  authDomain:        "cascade-experiment.firebaseapp.com",
-  databaseURL:       "https://cascade-experiment-default-rtdb.firebaseio.com",
-  projectId:         "cascade-experiment",
-  storageBucket:     "cascade-experiment.firebasestorage.app",
-  messagingSenderId: "299151610265",
-  appId:             "1:299151610265:web:11efaf597bcad76aa3c308"
-};
-
-// ════════════════════════════════════════════════════════
-// Group configuration
-// ════════════════════════════════════════════════════════
-const GROUP_CONFIG = {
-  sequential_1: 8,
-  sequential_2: 8,
-  sequential_3: 8,
-  sequential_4: 8,
-  sequential_5: 8,
-  sequential_6: 8,
-  simultaneous: 17
-};
-
-// ════════════════════════════════════════════════════════
-// Timing constants
-// ════════════════════════════════════════════════════════
-const DECISION_TIMEOUT_SECS = 30;   // on-screen countdown for the student
-const POSITION_TIMEOUT_MS   = 60000; // 1 min per sequential position from experiment start
-const MAX_SEQUENTIAL_SIZE   = 8;    // used for instructor timeline display
-
-// ════════════════════════════════════════════════════════
-// App state
-// ════════════════════════════════════════════════════════
-let db;
-let groupRef      = null;
-let myGroup       = null;
-let myPosition    = null;   // 1-indexed
-let isSequential  = false;
-let mySignal      = null;
-let decisionShown = false;
-let countdownInterval     = null;
-let countdownSecs         = DECISION_TIMEOUT_SECS;
-let countdownMaxSecs      = DECISION_TIMEOUT_SECS; // may be reduced to meet global deadline
-let experimentStart       = null;   // set when instructor clicks Start
-
-// Detect instructor / results mode via URL params
-const isInstructor = new URLSearchParams(window.location.search).has('instructor');
-const isResults    = new URLSearchParams(window.location.search).has('results');
-
-// ════════════════════════════════════════════════════════
-// Init
-// ════════════════════════════════════════════════════════
-firebase.initializeApp(firebaseConfig);
-db = firebase.database();
-
-// Subscribe to global experiment start time — all clients
-db.ref('meta/experiment_start').on('value', snap => {
-  experimentStart = snap.val();
-  if (isInstructor) renderInstructorTimeline();
-});
-
-// Periodically check deadlines:
-//   Instructor browser → checks ALL sequential groups (primary safety net)
-//   Student browser    → checks their own group (backup)
-setInterval(checkDeadlines, 10000);
-
-// Show correct initial screen
-if (isResults) {
-  showScreen('screen-results');
-  initResults();
-} else if (isInstructor) {
-  showScreen('screen-instructor');
-} else {
-  showScreen('screen-entry');
-}
-
-// ════════════════════════════════════════════════════════
-// Utilities
-// ════════════════════════════════════════════════════════
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-
-function groupLabel(key) {
-  return key === 'simultaneous'
-    ? 'Simultaneous Group'
-    : 'Sequential Group ' + key.split('_')[1];
-}
-
-function dbKey(i)        { return 'p' + i; }
-function fromDb(data, i) { return (data && data[dbKey(i)]) || null; }
-
-function fmtTime(ts) {
-  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-}
-
-// ════════════════════════════════════════════════════════
-// SCREEN R — Results
-// ════════════════════════════════════════════════════════
-function initResults() {
-  // Widen the card for the results view
-  document.querySelector('.card').style.maxWidth = '960px';
-
-  const root = document.getElementById('results-root');
-  root.innerHTML = `
-    <div class="results-header">
-      <h1><span class="live-dot"></span>Experiment Results</h1>
-      <div class="subtitle">Live — updates automatically as students submit decisions.</div>
-    </div>
-    <div class="results-grid" id="results-grid"></div>`;
-
-  const groups = Object.keys(GROUP_CONFIG);
-  const state  = {}; // groupKey -> { signals: {}, decisions: {} }
-
-  groups.forEach(gk => {
-    state[gk] = { signals: {}, decisions: {} };
-    // subscribe to signals (read-once is fine but live is consistent)
-    db.ref('signals/' + gk).on('value', snap => {
-      state[gk].signals = snap.val() || {};
-      renderResultsGrid(state);
-    });
-    // subscribe to decisions live
-    db.ref('experiment/' + gk).on('value', snap => {
-      state[gk].decisions = snap.val() || {};
-      renderResultsGrid(state);
-    });
-  });
-}
-
-function renderResultsGrid(state) {
-  const grid = document.getElementById('results-grid');
-  if (!grid) return;
-  const groups = Object.keys(GROUP_CONFIG);
-  grid.innerHTML = groups.map(gk => {
-    const size = GROUP_CONFIG[gk];
-    const sigs = state[gk].signals;
-    const decs = state[gk].decisions;
-    const isSim = gk === 'simultaneous';
-    const rows = Array.from({ length: size }, (_, i) => {
-      const key = 'p' + i;
-      const sig = sigs[key] || null;
-      const dec = decs[key] || null;
-      const sigHtml = sig
-        ? `<span class="sig-pill"><span class="sig-dot sig-${sig.toLowerCase()}"></span>${sig}</span>`
-        : `<span class="choice-pending">—</span>`;
-      let choiceHtml;
-      if (!dec) {
-        choiceHtml = `<span class="choice-pending">pending</span>`;
-      } else {
-        const label = dec.action === 'A' ? 'Urn A' : 'Urn B';
-        const cls   = dec.action === 'A' ? 'choice-a' : 'choice-b';
-        const auto  = dec.auto ? `<span class="auto-badge">auto</span>` : '';
-        choiceHtml  = `<span class="${cls}">${label}</span>${auto}`;
-      }
-      return `<tr><td>${i + 1}</td><td>${sigHtml}</td><td>${choiceHtml}</td></tr>`;
-    }).join('');
-
-    const decided = Object.keys(decs).length;
-    const pct = Math.round(decided / size * 100);
-    return `
-      <div class="results-group-card${isSim ? ' simultaneous' : ''}">
-        <div class="rg-title">${groupLabel(gk)} &nbsp;·&nbsp; ${decided}/${size} decided</div>
-        <table class="rg-table">
-          <thead><tr><th>Player</th><th>Signal</th><th>Choice</th></tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>`;
-  }).join('');
-}
-
-// ════════════════════════════════════════════════════════
-// SCREEN 0 — Instructor
-// ════════════════════════════════════════════════════════
-function instructorStart() {
-  // Write start time only once (transaction: write if not already set)
-  db.ref('meta/experiment_start').transaction(cur => cur === null ? Date.now() : cur);
-}
-
-function renderInstructorTimeline() {
-  const btn    = document.getElementById('btn-start');
-  const banner = document.getElementById('exp-running-banner');
-  const block  = document.getElementById('instructor-timeline');
-  const table  = document.getElementById('timeline-table');
-
-  if (!experimentStart) {
-    btn.disabled = false;
-    btn.textContent = 'Start Experiment →';
-    banner.style.display = 'none';
-    block.style.display  = 'none';
-    return;
-  }
-
-  // Experiment is running
-  btn.disabled = true;
-  btn.textContent = 'Experiment Started ✓';
-
-  const endTime = experimentStart + MAX_SEQUENTIAL_SIZE * POSITION_TIMEOUT_MS;
-  banner.style.display = 'block';
-  banner.innerHTML =
-    'Started at <strong>' + fmtTime(experimentStart) + '</strong>. ' +
-    'All positions auto-advance by <strong>' + fmtTime(endTime) + '</strong>.';
-
-  // Build timeline table
-  let html = '<tr><th>Position</th><th>Auto-advance deadline</th></tr>';
-  for (let i = 1; i <= MAX_SEQUENTIAL_SIZE; i++) {
-    const deadline = experimentStart + i * POSITION_TIMEOUT_MS;
-    const past     = Date.now() > deadline;
-    html +=
-      '<tr class="' + (past ? 'fired' : '') + '">' +
-        '<td>Player ' + i + '</td>' +
-        '<td>' + fmtTime(deadline) + (past ? ' (fired)' : '') + '</td>' +
-      '</tr>';
-  }
-  table.innerHTML = html;
-  block.style.display = 'block';
-}
-
-// ════════════════════════════════════════════════════════
-// Deadline checking
-// Called every 10s (setInterval) and on each Firebase update
-// ════════════════════════════════════════════════════════
-function checkDeadlines() {
-  if (!experimentStart) return;
-  if (isInstructor) {
-    // Instructor checks ALL sequential groups
-    Object.keys(GROUP_CONFIG).forEach(key => {
-      if (key !== 'simultaneous') checkGroupDeadlines(key, null);
-    });
-    renderInstructorTimeline(); // keep table current
-  } else if (myGroup && isSequential) {
-    // Students check their own group only (backup)
-    checkGroupDeadlines(myGroup, null);
-  }
-}
-
-// Pass `data` to avoid an extra Firebase read when called from handleStateUpdate.
-// Pass `null` to trigger a fresh read (used by setInterval).
-function checkGroupDeadlines(groupKey, data) {
-  if (!experimentStart) return;
-
-  const doCheck = d => {
-    const size = GROUP_CONFIG[groupKey];
-    const ref  = db.ref('experiment/' + groupKey);
-    const now  = Date.now();
-    for (let i = 0; i < size; i++) {
-      const deadline = experimentStart + (i + 1) * POSITION_TIMEOUT_MS;
-      if (now > deadline && !fromDb(d, i)) {
-        ref.child(dbKey(i)).transaction(current => {
-          if (current !== null) return; // already written, abort transaction
-          return { action: Math.random() < 0.5 ? 'A' : 'B', signal: null, auto: true, timestamp: Date.now() };
-        });
-      }
-    }
-  };
-
-  if (data !== null) {
-    doCheck(data);
-  } else {
-    db.ref('experiment/' + groupKey).once('value', snap => doCheck(snap.val() || {}));
-  }
-}
-
-// ════════════════════════════════════════════════════════
-// SCREEN 1 — Entry
-// ════════════════════════════════════════════════════════
-function startExperiment() {
-  const groupKey = document.getElementById('group-select').value;
-  const posRaw   = document.getElementById('position-input').value;
-  const pos      = parseInt(posRaw, 10);
-  const errEl    = document.getElementById('entry-error');
-  errEl.textContent = '';
-
-  if (!groupKey)          { errEl.textContent = 'Please select your group.'; return; }
-  if (!posRaw || pos < 1) { errEl.textContent = 'Please enter your position number.'; return; }
-  const max = GROUP_CONFIG[groupKey];
-  if (pos > max) { errEl.textContent = `Position must be between 1 and ${max} for this group.`; return; }
-
-  myGroup      = groupKey;
-  myPosition   = pos;
-  isSequential = groupKey !== 'simultaneous';
-  groupRef     = db.ref('experiment/' + myGroup);
-
-  // Fetch signal first, then subscribe — ensures signal is available when decision screen renders
-  db.ref('signals/' + myGroup + '/' + dbKey(pos - 1))
-    .once('value', snap => {
-      mySignal = snap.val();
-      groupRef.on('value', snapshot => handleStateUpdate(snapshot.val() || {}));
-    });
-}
-
-// ════════════════════════════════════════════════════════
-// Main handler — fires on every Firebase group change
-// ════════════════════════════════════════════════════════
-function handleStateUpdate(data) {
-  const size      = GROUP_CONFIG[myGroup];
-  const decisions = Array.from({ length: size }, (_, i) => fromDb(data, i));
-  const myIdx     = myPosition - 1;
-
-  // Check deadlines inline (using already-fetched data — no extra DB read)
-  if (isSequential) checkGroupDeadlines(myGroup, data);
-
-  // Already submitted?
-  if (decisions[myIdx]) {
-    stopCountdown();
-    showScreen('screen-thanks');
-    return;
-  }
-
-  if (!isSequential) {
-    if (!decisionShown) { decisionShown = true; renderDecision(decisions); }
-    return;
-  }
-
-  const priorDone = decisions.slice(0, myIdx).every(d => d !== null);
-  if (priorDone) {
-    if (!decisionShown) { decisionShown = true; renderDecision(decisions); }
-  } else {
-    renderWaiting(decisions);
-  }
-}
-
-// ════════════════════════════════════════════════════════
-// SCREEN 2 — Waiting
-// ════════════════════════════════════════════════════════
-function renderWaiting(decisions) {
-  showScreen('screen-waiting');
-
-  document.getElementById('wait-title').textContent =
-    'Player ' + myPosition + ' — ' + groupLabel(myGroup);
-
-  const pending = [];
-  for (let i = 0; i < myPosition - 1; i++) {
-    if (!decisions[i]) pending.push(i + 1);
-  }
-  const s = pending.length === 1 ? '' : 's';
-  document.getElementById('wait-msg').textContent =
-    'Waiting for Player' + s + ' ' + pending.join(', ') + ' to decide.';
-
-  const dotsEl = document.getElementById('progress-dots');
-  dotsEl.innerHTML = '';
-  decisions.forEach((d, i) => {
-    const dot = document.createElement('div');
-    if (i === myPosition - 1) {
-      dot.className = 'dot dot-me'; dot.textContent = i + 1;
-    } else if (d && d.auto) {
-      dot.className = 'dot dot-auto'; dot.textContent = d.action;
-    } else if (d) {
-      dot.className = 'dot dot-done'; dot.textContent = d.action;
-    } else {
-      dot.className = 'dot dot-pending'; dot.textContent = i + 1;
-    }
-    dotsEl.appendChild(dot);
-  });
-}
-
-// ════════════════════════════════════════════════════════
-// SCREEN 3 — Decision (rendered only once per student)
-// ════════════════════════════════════════════════════════
-function renderDecision(decisions) {
-  showScreen('screen-decision');
-
-  document.getElementById('dec-title').textContent =
-    groupLabel(myGroup) + ' — Player ' + myPosition;
-
-  // Prior decisions
-  const priorEl = document.getElementById('prior-section');
-  if (!isSequential) {
-    priorEl.innerHTML =
-      '<div class="section-label">Prior Decisions</div>' +
-      '<p class="note-text">You are in the simultaneous group — you do not observe others\' decisions.</p>';
-  } else {
-    const prior = decisions.slice(0, myPosition - 1);
-    if (prior.length === 0) {
-      priorEl.innerHTML =
-        '<div class="section-label">Prior Decisions</div>' +
-        '<p class="note-text">You are Player 1 — no prior decisions to observe.</p>';
-    } else {
-      let html = '<div class="section-label">Prior Decisions</div><div class="prior-box">';
-      prior.forEach((d, i) => {
-        html +=
-          '<div class="decision-row">' +
-            '<span class="pl">Player ' + (i + 1) + '</span>' +
-            '<span class="urn">Urn ' + (d ? d.action : '—') + '</span>' +
-          '</div>';
-      });
-      html += '</div>';
-      priorEl.innerHTML = html;
-    }
-  }
-
-  renderSignal();
-  startCountdown();
-}
-
-// ════════════════════════════════════════════════════════
-// Signal display (read-only, from /signals/ in Firebase)
-// ════════════════════════════════════════════════════════
-function renderSignal() {
-  const el = document.getElementById('signal-display');
-  if (!mySignal) {
-    el.innerHTML = '<span class="signal-missing">Signal not found. Check your group and position number.</span>';
-    return;
-  }
-  const color = mySignal === 'Red' ? '#ef4444' : '#3b82f6';
-  el.innerHTML =
-    '<span class="signal-ball" style="background:' + color + ';box-shadow:0 0 0 2px white,0 0 0 3px ' + color + ';"></span>' +
-    '<span class="signal-text">' + mySignal + ' ball</span>';
-}
-
-// ════════════════════════════════════════════════════════
-// Countdown timer
-//
-// The countdown starts at min(30s, time remaining until global deadline).
-// This ensures the visual timer never promises more time than is available.
-// ════════════════════════════════════════════════════════
-function getInitialCountdownSecs() {
-  if (!experimentStart || !isSequential) return DECISION_TIMEOUT_SECS;
-  const globalDeadlineMs  = experimentStart + myPosition * POSITION_TIMEOUT_MS;
-  const secsUntilDeadline = Math.floor((globalDeadlineMs - Date.now()) / 1000);
-  return Math.min(DECISION_TIMEOUT_SECS, Math.max(1, secsUntilDeadline));
-}
-
-function startCountdown() {
-  countdownMaxSecs = getInitialCountdownSecs();
-  countdownSecs    = countdownMaxSecs;
-  updateCountdownUI();
-
-  countdownInterval = setInterval(() => {
-    countdownSecs--;
-    updateCountdownUI();
-    if (countdownSecs <= 0) {
-      clearInterval(countdownInterval);
-      countdownInterval = null;
-      autoSubmit();
-    }
-  }, 1000);
-}
-
-function stopCountdown() {
-  if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
-}
-
-function updateCountdownUI() {
-  const numEl  = document.getElementById('countdown-num');
-  const fillEl = document.getElementById('countdown-fill');
-  const wrapEl = document.getElementById('countdown-wrap');
-  const lblEl  = document.getElementById('countdown-label');
-  if (!numEl) return;
-
-  numEl.textContent  = countdownSecs;
-  fillEl.style.width = (countdownSecs / countdownMaxSecs * 100) + '%';
-
-  if (countdownSecs <= 10) {
-    wrapEl.classList.add('urgent');
-    lblEl.textContent = 'seconds left — decide now!';
-  }
-}
-
-// ════════════════════════════════════════════════════════
-// Auto-submit when countdown expires
-// ════════════════════════════════════════════════════════
-function autoSubmit() {
-  document.getElementById('btn-a').disabled = true;
-  document.getElementById('btn-b').disabled = true;
-
-  groupRef.child(dbKey(myPosition - 1)).set({
-    action:    Math.random() < 0.5 ? 'A' : 'B',
-    signal:    mySignal,
-    auto:      true,
-    timestamp: Date.now()
-  });
-  // Firebase listener fires → handleStateUpdate → screen-thanks
-}
-
-// ════════════════════════════════════════════════════════
-// Manual submit
-// ════════════════════════════════════════════════════════
-function submitDecision(urnChoice) {
-  stopCountdown();
-  document.getElementById('btn-a').disabled = true;
-  document.getElementById('btn-b').disabled = true;
-  document.getElementById('dec-error').textContent = '';
-
-  groupRef.child(dbKey(myPosition - 1)).set({
-    action:    urnChoice,
-    signal:    mySignal,
-    auto:      false,
-    timestamp: Date.now()
-  }).catch(() => {
-    document.getElementById('dec-error').textContent =
-      'Could not save your decision. Check your connection and try again.';
+  <!-- âââ SCREEN R â Results (URL: ?results) ââââââââââ\]ÞÛSÜ\ÌÛÚQÛ]H]]ÛXZ[Ø\ØØYKY^\[Y[\X\ÙX\ÛÛH]X\ÙUTÎËØØ\ØØYKY^\[Y[YY][\\X\ÙZ[ËÛÛHÚXÝYØ\ØØYKY^\[Y[ÝÜYÙPXÚÙ]Ø\ØØYKY^\[Y[\X\Ù\ÝÜYÙK\Y\ÜØYÚ[ÔÙ[\YNLMLMLH\YNNLMLMLNÙXLYYYNMØØY
+ÍXLØÌÌNÂËÈ8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥dËÈÜÝ\ÛÛYÝ\][ÛËÈ8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥dÛÛÝÔÕTÐÓÓQÈHÂÙ\]Y[X[ÌNÙ\]Y[X[ÌÙ\]Y[X[ÌÎÙ\]Y[X[ÍÙ\]Y[X[ÍNÙ\]Y[X[ÍÚ[][[[Ý\ÎMÂNÂËÈ8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥dËÈ[Z[ÈÛÛÝ[ÂËÈ8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥dÛÛÝPÒTÒSÓÕSQSÕUÔÑPÔÈHÌÈËÈÛ\ØÜY[ÛÝ[ÝÛÜHÝY[ÛÛÝÔÒUSÓÕSQSÕUÓTÈHÌÈËÈÌÙXÈ\Ù\]Y[X[ÜÚ][ÛÛH^\[Y[Ý\ÛÛÝPVÔÑTUQSPSÔÒVHHÈËÈ\ÙYÜ[ÝXÝÜ[Y[[H\Ü^BËÈ8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥dËÈ\Ý]BËÈ8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d]Â]ÜÝ\YH[Â]^QÜÝ\H[Â]^TÜÚ][ÛH[ÈËÈKZ[^Y]\ÔÙ\]Y[X[H[ÙNÂ]^TÚYÛ[H[Â]XÚ\Ú[ÛÚÝÛH[ÙNÂ]ÛÝ[ÝÛ[\[H[Â]ÛÝ[ÝÛÙXÜÈHPÒTÒSÓÕSQSÕUÔÑPÔÎÂ]ÛÝ[ÝÛX^ÙXÜÈHPÒTÒSÓÕSQSÕUÔÑPÔÎÈËÈX^HHYXÙYÈYY]ÛØ[XY[B]^\[Y[Ý\H[ÈËÈÙ]Ú[[ÝXÝÜÛXÚÜÈÝ\ËÈ]XÝ[ÝXÝÜÈ\Ý[È[ÙHXHT\[\ÂÛÛÝ\Ò[ÝXÝÜH]ÈTÙX\Ú\[\ÊÚ[ÝËØØ][ÛÙX\Ú
+K\Ê	Ú[ÝXÝÜÊNÂÛÛÝ\Ô\Ý[ÈH]ÈTÙX\Ú\[\ÊÚ[ÝËØØ][ÛÙX\Ú
+K\Ê	Ü\Ý[ÉÊNÂËÈ8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥dËÈ[]ËÈ8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d\X\ÙK[]X[^P\
+\X\ÙPÛÛYÊNÂH\X\ÙK]X\ÙJ
+NÂËÈÝXØÜXHÈÛØ[^\[Y[Ý\[YH8 %[ÛY[ÂY	ÛY]KÙ^\[Y[ÜÝ\	ÊKÛ	Ý[YIËÛ\OÂ^\[Y[Ý\HÛ\[
+
+NÂY
+\Ò[ÝXÝÜH[\[ÝXÝÜ[Y[[J
+NÂJNÂËÈ\[ÙXØ[HÚXÚÈXY[\ÎËÈ[ÝXÝÜÝÜÙ\8¡¤ÚXÚÜÈSÙ\]Y[X[ÜÝ\È
+[X\HØY]H]
+BËÈÝY[ÝÜÙ\8¡¤ÚXÚÜÈZ\ÝÛÜÝ\
+XÚÝ\
+BÙ][\[
+ÚXÚÑXY[\ËL
+NÂËÈÚÝÈÛÜXÝ[]X[ØÜY[Y
+\Ô\Ý[ÊHÂÚÝÔØÜY[	ÜØÜY[\\Ý[ÉÊNÂ[]\Ý[Ê
+NÂH[ÙHY
+\Ò[ÝXÝÜHÂÚÝÔØÜY[	ÜØÜY[Z[ÝXÝÜÊNÂH[ÙHÂÚÝÔØÜY[	ÜØÜY[Y[IÊNÂBÓÓQÊNÂÛÛÝÝ]HHßNÈËÈÜÝ\Ù^HOÈÚYÛ[ÎßKXÚ\Ú[ÛÎßHBÜÝ\ËÜXXÚ
+ÚÈOÂÝ]VÙÚ×HHÈÚYÛ[ÎßKXÚ\Ú[ÛÎßHNÂËÈÝXØÜXHÈÚYÛ[È
+XY[ÛÙH\È[H]]H\ÈÛÛÚ\Ý[
+BY	ÜÚYÛ[ËÉÈ
+ÈÚÊKÛ	Ý[YIËÛ\OÂÝ]VÙÚ×KÚYÛ[ÈHÛ\[
+
+HßNÂ[\\Ý[ÑÜY
+Ý]JNÂJNÂËÈÝXØÜXHÈXÚ\Ú[ÛÈ]BY	Ù^\[Y[ÉÈ
+ÈÚÊKÛ	Ý[YIËÛ\OÂÝ]VÙÚ×KXÚ\Ú[ÛÈHÛ\[
+
+HßNÂ[\\Ý[ÑÜY
+Ý]JNÂJNÂJNÂB[Ý[Û[\\Ý[ÑÜY
+Ý]JHÂÛÛÝÜYHØÝ[Y[Ù][[Y[RY
+	Ü\Ý[ËYÜY	ÊNÂY
+YÜY
+H]\ÂÛÛÝÜÝ\ÈHØXÝÙ^\ÊÔÕTÐÓÓQÊNÂÜY[\SHÜÝ\ËX\
+ÚÈOÂÛÛÝÚ^HHÔÕTÐÓÓQÖÙÚ×NÂÛÛÝÚYÜÈHÝ]VÙÚ×KÚYÛ[ÎÂÛÛÝXÜÈHÝ]VÙÚ×KXÚ\Ú[ÛÎÂÛÛÝ\ÔÚ[HHÚÈOOH	ÜÚ[][[[Ý\ÉÎÂÛÛÝÝÜÈH\^KÛJÈ[ÝÚ^HK
+ËJHOÂÛÛÝÙ^HH	Ü	È
+ÈNÂÛÛÝÚYÈHÚYÜÖÚÙ^WH[ÂÛÛÝXÈHXÜÖÚÙ^WH[ÂÛÛÝÚYÒ[HÚYÂÈÜ[Û\ÜÏHÚYË\[Ü[Û\ÜÏHÚYËYÝÚYËIÜÚYËÓÝÙ\Ø\ÙJ
+_HÜÜ[ÜÚYßOÜÜ[Ü[Û\ÜÏHÚÚXÙK\[[È¸ %ÜÜ[Â]ÚÚXÙR[ÂY
+YXÊHÂÚÚXÙR[HÜ[Û\ÜÏHÚÚXÙK\[[È[[ÏÜÜ[ÂH[ÙHÂÛÛÝX[HXËXÝ[ÛOOH	ÐIÈÈ	ÐYH\È	ÔY\ÎÂÛÛÝÛÈHXËXÝ[ÛOOH	ÐIÈÈ	ØÚÚXÙKXIÈ	ØÚÚXÙKXÎÂÚÚXÙR[HÜ[Û\ÜÏHØÛßHÛX[OÜÜ[ÂB]\ÚH
+È_OÝÜÚYÒ[OÝØÚÚXÙR[OÝÝÂJKÚ[	ÉÊNÂÛÛÝXÚYYHØXÝÙ^\ÊXÜÊK[ÝÂÛÛÝÝHX]Ý[
+XÚYYÈÚ^H
+L
+NÂ]\]Û\ÜÏH\Ý[ËYÜÝ\XØ\	Ú\ÔÚ[HÈ	ÈÚ[][[[Ý\ÉÈ	ÉßH]Û\ÜÏHË]]HÙÜÝ\X[
+ÚÊ_H	Üð­ÉÜÈ	ÙXÚYYKÉÜÚ^_HXÚYYÙ]XHÛ\ÜÏHË]XHXY^Y\ÝÚYÛ[ÝÚÚXÙOÝÝÝXYÙOÜÝÜßOÝÙOÝXOÙ]ÂJKÚ[	ÉÊNÂBËÈ8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥dËÈÐÔQS8 %[ÝXÝÜËÈ8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d[Ý[Û[ÝXÝÜÝ\
+
+HÂËÈÜ]HÝ\[YHÛHÛÙH
+[ØXÝ[ÛÜ]HYÝ[XYHÙ]
+BY	ÛY]KÙ^\[Y[ÜÝ\	ÊK[ØXÝ[ÛÝ\OÝ\OOH[È]KÝÊ
+HÝ\NÂB[Ý[Û[\[ÝXÝÜ[Y[[J
+HÂÛÛÝHØÝ[Y[Ù][[Y[RY
+	Ø\Ý\	ÊNÂÛÛÝ[\HØÝ[Y[Ù][[Y[RY
+	Ù^\[[ËX[\ÊNÂÛÛÝØÚÈHØÝ[Y[Ù][[Y[RY
+	Ú[ÝXÝÜ][Y[[IÊNÂÛÛÝXHHØÝ[Y[Ù][[Y[RY
+	Ý[Y[[K]XIÊNÂY
+Y^\[Y[Ý\
+HÂ\ØXYH[ÙNÂ^ÛÛ[H	ÔÝ\^\[Y[8¡¤ÎÂ[\Ý[K\Ü^HH	ÛÛIÎÂØÚËÝ[K\Ü^HH	ÛÛIÎÂ]\ÂBËÈ^\[Y[\È[[Â\ØXYHYNÂ^ÛÛ[H	Ñ^\[Y[Ý\Y8§$ÉÎÂÛÛÝ[[YHH^\[Y[Ý\
+ÈPVÔÑTUQSPSÔÒVH
+ÔÒUSÓÕSQSÕUÓTÎÂ[\Ý[K\Ü^HH	ØØÚÉÎÂ[\[\SB	ÔÝ\Y]ÝÛÏÈ
+È][YJ^\[Y[Ý\
+H
+È	ÏÜÝÛÏ	È
+Â	Ð[ÜÚ][ÛÈ]]ËXY[ÙHHÝÛÏÈ
+È][YJ[[YJH
+È	ÏÜÝÛÏÎÂËÈZ[[Y[[HXB][H	ÏÜÚ][ÛÝ]]ËXY[ÙHXY[OÝÝÎÂÜ
+]HHNÈHHPVÔÑTUQSPSÔÒVNÈJÊÊHÂÛÛÝXY[HH^\[Y[Ý\
+ÈH
+ÔÒUSÓÕSQSÕUÓTÎÂÛÛÝ\ÝH]KÝÊ
+HXY[NÂ[
+ÏB	ÏÛ\ÜÏHÈ
+È
+\ÝÈ	Ù\Y	È	ÉÊH
+È	ÈÈ
+Â	Ï^Y\	È
+ÈH
+È	ÏÝÈ
+Â	ÏÈ
+È][YJXY[JH
+È
+\ÝÈ	È
+\Y
+IÈ	ÉÊH
+È	ÏÝÈ
+Â	ÏÝÎÂBXK[\SH[ÂØÚËÝ[K\Ü^HH	ØØÚÉÎÂBËÈ8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥dËÈXY[HÚXÚÚ[ÂËÈØ[Y]\HLÈ
+Ù][\[
+H[ÛXXÚ\X\ÙH\]BËÈ8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d[Ý[ÛÚXÚÑXY[\Ê
+HÂY
+Y^\[Y[Ý\
+H]\ÂY
+\Ò[ÝXÝÜHÂËÈ[ÝXÝÜÚXÚÜÈSÙ\]Y[X[ÜÝ\ÂØXÝÙ^\ÊÔÕTÐÓÓQÊKÜXXÚ
+Ù^HOÂY
+Ù^HOOH	ÜÚ[][[[Ý\ÉÊHÚXÚÑÜÝ\XY[\ÊÙ^K[
+NÂJNÂ[\[ÝXÝÜ[Y[[J
+NÈËÈÙY\XHÝ\[H[ÙHY
+^QÜÝ\	\ÔÙ\]Y[X[
+HÂËÈÝY[ÈÚXÚÈZ\ÝÛÜÝ\ÛH
+XÚÝ\
+BÚXÚÑÜÝ\XY[\Ê^QÜÝ\[
+NÂBBËÈ\ÜÈ]XÈ]ÚY[^H\X\ÙHXYÚ[Ø[YÛH[TÝ]U\]KËÈ\ÜÈ[ÈYÙÙ\H\ÚXY
+\ÙYHÙ][\[
+K[Ý[ÛÚXÚÑÜÝ\XY[\ÊÜÝ\Ù^K]JHÂY
+Y^\[Y[Ý\
+H]\ÂÛÛÝÐÚXÚÈHOÂÛÛÝÚ^HHÔÕTÐÓÓQÖÙÜÝ\Ù^WNÂÛÛÝYHY	Ù^\[Y[ÉÈ
+ÈÜÝ\Ù^JNÂÛÛÝÝÈH]KÝÊ
+NÂÜ
+]HHÈHÚ^NÈJÊÊHÂÛÛÝXY[HH^\[Y[Ý\
+È
+H
+ÈJH
+ÔÒUSÓÕSQSÕUÓTÎÂY
+ÝÈXY[H	YÛQJJHÂYÚ[
+Ù^JJJK[ØXÝ[ÛÝ\[OÂY
+Ý\[OOH[
+H]\ÈËÈ[XYHÜ][XÜ[ØXÝ[Û]\ÈXÝ[ÛX][ÛJ
+HHÈ	ÐIÈ	ÐËÚYÛ[[]]ÎYK[Y\Ý[\]KÝÊ
+HNÂJNÂBBNÂY
+]HOOH[
+HÂÐÚXÚÊ]JNÂH[ÙHÂY	Ù^\[Y[ÉÈ
+ÈÜÝ\Ù^JKÛÙJ	Ý[YIËÛ\OÐÚXÚÊÛ\[
+
+HßJJNÂBBËÈ8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥dËÈÐÔQSH8 %[BËÈ8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d[Ý[ÛÝ\^\[Y[
+
+HÂÛÛÝÜÝ\Ù^HHØÝ[Y[Ù][[Y[RY
+	ÙÜÝ\\Ù[XÝ	ÊK[YNÂÛÛÝÜÔ]ÈHØÝ[Y[Ù][[Y[RY
+	ÜÜÚ][ÛZ[]	ÊK[YNÂÛÛÝÜÈH\ÙR[
+ÜÔ]ËL
+NÂÛÛÝ\[HØÝ[Y[Ù][[Y[RY
+	Ù[KY\ÜÊNÂ\[^ÛÛ[H	ÉÎÂY
+YÜÝ\Ù^JHÈ\[^ÛÛ[H	ÔX\ÙHÙ[XÝ[Ý\ÜÝ\ÎÈ]\ÈBY
+\ÜÔ]ÈÜÈJHÈ\[^ÛÛ[H	ÔX\ÙH[\[Ý\ÜÚ][Û[X\ÎÈ]\ÈBÛÛÝX^HÔÕTÐÓÓQÖÙÜÝ\Ù^WNÂY
+ÜÈX^
+HÈ\[^ÛÛ[HÜÚ][Û]\ÝH]ÙY[H[	ÛX^HÜ\ÈÜÝ\È]\ÈB^QÜÝ\HÜÝ\Ù^NÂ^TÜÚ][ÛHÜÎÂ\ÔÙ\]Y[X[HÜÝ\Ù^HOOH	ÜÚ[][[[Ý\ÉÎÂÜÝ\YHY	Ù^\[Y[ÉÈ
+È^QÜÝ\
+NÂËÈ]ÚÚYÛ[\Ý[ÝXØÜXH8 %[Ý\\ÈÚYÛ[\È]Z[XHÚ[XÚ\Ú[ÛØÜY[[\ÂY	ÜÚYÛ[ËÉÈ
+È^QÜÝ\
+È	ËÉÈ
+ÈÙ^JÜÈHJJBÛÙJ	Ý[YIËÛ\OÂ^TÚYÛ[HÛ\[
+
+NÂÜÝ\YÛ	Ý[YIËÛ\ÚÝO[TÝ]U\]JÛ\ÚÝ[
+
+HßJJNÂJNÂBËÈ8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥dËÈXZ[[\8 %\\ÈÛ]\H\X\ÙHÜÝ\Ú[ÙBËÈ8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d[Ý[Û[TÝ]U\]J]JHÂÛÛÝÚ^HHÔÕTÐÓÓQÖÛ^QÜÝ\NÂÛÛÝXÚ\Ú[ÛÈH\^KÛJÈ[ÝÚ^HK
+ËJHOÛQ]KJJNÂÛÛÝ^RYH^TÜÚ][ÛHNÂËÈÚXÚÈXY[\È[[H
+\Ú[È[XYKY]ÚY]H8 %È^HXY
+BY
+\ÔÙ\]Y[X[
+HÚXÚÑÜÝ\XY[\Ê^QÜÝ\]JNÂËÈ[XYHÝXZ]YÂY
+XÚ\Ú[ÛÖÛ^RYJHÂÝÜÛÝ[ÝÛ
+NÂÚÝÔØÜY[	ÜØÜY[][ÜÉÊNÂ]\ÂBY
+Z\ÔÙ\]Y[X[
+HÂY
+YXÚ\Ú[ÛÚÝÛHÈXÚ\Ú[ÛÚÝÛHYNÈ[\XÚ\Ú[ÛXÚ\Ú[ÛÊNÈB]\ÂBÛÛÝ[ÜÛHHXÚ\Ú[ÛËÛXÙJ^RY
+K]\JOOOH[
+NÂY
+[ÜÛJHÂY
+YXÚ\Ú[ÛÚÝÛHÈXÚ\Ú[ÛÚÝÛHYNÈ[\XÚ\Ú[ÛXÚ\Ú[ÛÊNÈBH[ÙHÂ[\ØZ][ÊXÚ\Ú[ÛÊNÂBBËÈ8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥dËÈÐÔQS8 %ØZ][ÂËÈ8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d[Ý[Û[\ØZ][ÊXÚ\Ú[ÛÊHÂÚÝÔØÜY[	ÜØÜY[]ØZ][ÉÊNÂØÝ[Y[Ù][[Y[RY
+	ÝØZ]]]IÊK^ÛÛ[B ^ÛÛ[
+Â	ÈÜP]Û\È[YÛ^Ù[\ÈØ\MÂXÚÙÜÝ[ÙXÈÜ\K\ÛÛYÙÂÜ\\Y]\ÎLÈY[ÎLMÈX\Ú[XÝÛNÂ[Ú][ÛXÚÙÜÝ[ËÜ\XÛÛÜÎÂBÛÝ[ÝÛ]Ü\\Ù[ÈXÚÙÜÝ[ÙYÈÜ\XÛÛÜÙY
+
+
+ÈBÛÝ[ÝÛ[[HÂÛ\Ú^NKÜ[NÈÛ]ÙZYÚ
+ÌÈÛÛÜÎLNÂZ[]ÚYÍÈ^X[YÛÙ[\È[KZZYÚNÂBÛÝ[ÝÛ]Ü\\Ù[ÛÝ[ÝÛ[[HÈÛÛÜÎNLXXÈBÛÝ[ÝÛ\YÚÈ^NÈBÛÝ[ÝÛ[X[ÈÛ\Ú^NÎ[NÈÛÛÜÎLNÈÛ]ÙZYÚ
+LÈX\Ú[XÝÛN
+\ÈBÛÝ[ÝÛ]Ü\\Ù[ÛÝ[ÝÛ[X[ÈÛÛÜÎNLXXÈBÛÝ[ÝÛ]XÚÈÈZYÚ
+\ÈXÚÙÜÝ[ÙMNÈÜ\\Y]\ÎÜÈÝ\ÝÎY[ÈBÛÝ[ÝÛ]Ü\\Ù[ÛÝ[ÝÛ]XÚÈÈXÚÙÜÝ[ÙXØXØNÈBÛÝ[ÝÛY[ÈZYÚL	NÈXÚÙÜÝ[ÙNYLÈÜ\\Y]\ÎÜÈ[Ú][ÛÚY\È[X\ÈBÛÝ[ÝÛ]Ü\\Ù[ÛÝ[ÝÛY[ÈXÚÙÜÝ[ÙY
+
+
+ÈBÊ\]ÛÈ
+Â\Z[ÈÛ\Ú^N[NÈÛÛÜÎXØLØYÈX\Ú[XÝÛNLÈB\X]ÛÈÈ\Ü^N^ÈØ\LÈB]\Â^NÈY[ÎMÜLÂXÚÙÜÝ[Ú]NÈÜ\ÛÛYÙMYMÙXÂÜ\\Y]\ÎLÈÛ\Ú^NK
+\[NÈÛ]ÙZYÚ
+ÌÂÝ\ÛÜÚ[\ÈÛÛÜÌLLNÎÂ[Ú][ÛÜ\XÛÛÜLËXÚÙÜÝ[LÎÂB]\Ý\Ý
+\ØXY
+HÈÜ\XÛÛÜÌØÈXÚÙÜÝ[ÙYÈÛÛÜÌY
+YÈB]\\ØXYÈÜXÚ]N
+NÈÝ\ÛÜÝX[ÝÙYÈBXÚ\Ú[ÛY\ÜÈÛÛÜÙÌÈÛ\Ú^N
+\[NÈX\Ú[]ÜLÈ^X[YÛÙ[\ÈZ[ZZYÚÈBÊ[Ë^[ÝHØÜY[
+Â[ÜË]Ü\È^X[YÛÙ[\ÈY[ÎLÈB[ÜËZXÛÛÈÛ\Ú^NË[NÈX\Ú[XÝÛNLÈB[ÜË]]HÈÛ\Ú^NKÍ\[NÈÛ]ÙZYÚ
+ÌÈÛÛÜÌLLNÎÈX\Ú[XÝÛNÈB[ÜË\ÝXÈÛ\Ú^N\[NÈÛÛÜÍÌÈBÊØÜY[È
+ÂØÜY[È\Ü^NÛNÈBØÜY[XÝ]HÈ\Ü^NØÚÎÈBÊ8¥ 8¥ 8¥ \Ý[È[[8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 
+Â\Ý[ËXÙHÂX^]ÚYMÂÚYL	NÂY[ÎM
+ÂB\Ý[ËZXY\ÂX\Ú[XÝÛNÂB\Ý[ËZXY\HÈÛ\Ú^NK\[NÈÛ]ÙZYÚ
+ÌÈÛÛÜÌLLNÎÈB\Ý[ËZXY\ÝX]HÈÛ\Ú^N[NÈÛÛÜÍÌ£gain.';
     document.getElementById('btn-a').disabled = false;
     document.getElementById('btn-b').disabled = false;
   });
