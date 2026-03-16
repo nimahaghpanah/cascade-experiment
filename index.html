@@ -169,6 +169,8 @@
     .dot-pending { background: #f3f4f6; color: #9ca3af; }
     .dot-done    { background: #d1fae5; color: #065f46; }
     .dot-auto    { background: #d1fae5; color: #065f46; }
+    .dot-blue    { background: #dbeafe; color: #1d4ed8; }
+    .dot-red     { background: #fee2e2; color: #dc2626; }
     .dot-me      { background: #dbeafe; color: #1d4ed8; outline: 2px solid #3b82f6; }
 
     /* ── Decision screen ─────────────────────────────── */
@@ -800,7 +802,8 @@ function renderWaiting(decisions) {
     if (i === myPosition - 1) {
       dot.className = 'dot dot-me'; dot.textContent = i + 1;
     } else if (d) {
-      dot.className = 'dot dot-done'; dot.textContent = d.action;
+      dot.className = d.action === 'A' ? 'dot dot-blue' : 'dot dot-red';
+      dot.textContent = d.action === 'A' ? 'B' : 'R';
     } else {
       dot.className = 'dot dot-pending'; dot.textContent = i + 1;
     }
