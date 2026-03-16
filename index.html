@@ -69,9 +69,7 @@
       background: white;
       margin-bottom: 20px;
     }
-
     select { appearance: none; -webkit-appearance: none; cursor: pointer; }
-
     select:focus, input:focus {
       outline: none;
       border-color: #3b82f6;
@@ -90,7 +88,8 @@
       cursor: pointer;
       margin-top: 2px;
     }
-    .btn-primary:hover { background: #1d4ed8; }
+    .btn-primary:hover:not(:disabled) { background: #1d4ed8; }
+    .btn-primary:disabled { background: #93c5fd; cursor: default; }
 
     .error-msg {
       color: #dc2626;
@@ -99,13 +98,47 @@
       margin-bottom: 14px;
     }
 
-    /* ── Waiting screen ───────────────────────────── */
+    /* ── Instructor screen ───────────────────────────── */
+    .timeline-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      margin-top: 6px;
+    }
+    .timeline-table th {
+      text-align: left;
+      color: #9ca3af;
+      font-weight: 600;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      padding: 4px 0 8px;
+    }
+    .timeline-table th:last-child { text-align: right; }
+    .timeline-table td {
+      padding: 5px 0;
+      color: #374151;
+      border-top: 1px solid #f3f4f6;
+    }
+    .timeline-table td:last-child { text-align: right; color: #6b7280; }
+    .timeline-table tr.fired td { color: #9ca3af; text-decoration: line-through; }
+
+    .exp-running-msg {
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      border-radius: 9px;
+      padding: 12px 16px;
+      font-size: 0.88rem;
+      color: #166534;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    /* ── Waiting screen ──────────────────────────────── */
     .wait-title { font-size: 1.05rem; font-weight: 600; color: #111827; margin-bottom: 5px; }
-    .wait-group { font-size: 0.88rem; color: #6b7280; margin-bottom: 24px; }
 
     .spinner-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
     .spinner {
-      display: inline-block;
       width: 20px; height: 20px;
       border: 2.5px solid #e5e7eb;
       border-top-color: #3b82f6;
@@ -127,21 +160,18 @@
     }
 
     .progress-dots { display: flex; flex-wrap: wrap; gap: 8px; }
-
     .dot {
       width: 38px; height: 38px;
       border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.78rem;
-      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.78rem; font-weight: 700;
     }
     .dot-pending { background: #f3f4f6; color: #9ca3af; }
     .dot-done    { background: #d1fae5; color: #065f46; }
+    .dot-auto    { background: #fef9c3; color: #854d0e; }
     .dot-me      { background: #dbeafe; color: #1d4ed8; outline: 2px solid #3b82f6; }
 
-    /* ── Decision screen ──────────────────────────── */
+    /* ── Decision screen ─────────────────────────────── */
     .dec-title { font-size: 1.05rem; font-weight: 600; color: #111827; margin-bottom: 20px; }
 
     .prior-box {
@@ -151,13 +181,9 @@
       padding: 14px 18px;
       margin-bottom: 6px;
     }
-
     .decision-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 5px 0;
-      font-size: 0.93rem;
-      color: #374151;
+      display: flex; justify-content: space-between;
+      padding: 5px 0; font-size: 0.93rem; color: #374151;
       border-bottom: 1px solid #f3f4f6;
     }
     .decision-row:last-child { border-bottom: none; }
@@ -165,60 +191,53 @@
     .decision-row .urn { font-weight: 700; color: #111827; }
 
     .note-text { font-size: 0.88rem; color: #6b7280; font-style: italic; margin-bottom: 6px; }
-
     .prior-section { margin-bottom: 24px; }
 
-    /* Signal picker */
+    /* Signal display */
     .signal-section { margin-bottom: 24px; }
-
-    .signal-hint { font-size: 0.82rem; color: #9ca3af; margin-bottom: 10px; }
-
-    .signal-options { display: flex; gap: 10px; }
-
-    .signal-option {
-      flex: 1;
-      padding: 13px 10px;
-      border: 2px solid #e5e7eb;
+    .signal-display {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 18px;
       border-radius: 10px;
-      cursor: pointer;
-      text-align: center;
-      font-size: 0.95rem;
-      font-weight: 500;
-      color: #374151;
-      user-select: none;
-      transition: border-color 0.12s, background 0.12s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
+      border: 2px solid #e5e7eb;
+      background: #f9fafb;
     }
-    .signal-option:hover { border-color: #93c5fd; }
+    .signal-ball { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; }
+    .signal-text { font-size: 1.05rem; font-weight: 600; color: #111827; }
+    .signal-missing { font-size: 0.88rem; color: #dc2626; font-style: italic; }
 
-    .signal-dot {
-      width: 13px; height: 13px;
-      border-radius: 50%;
-      flex-shrink: 0;
+    /* Countdown */
+    .countdown-wrap {
+      display: flex; align-items: center; gap: 14px;
+      background: #fffbeb; border: 1.5px solid #fbbf24;
+      border-radius: 10px; padding: 12px 16px; margin-bottom: 24px;
+      transition: background 0.4s, border-color 0.4s;
     }
+    .countdown-wrap.urgent { background: #fef2f2; border-color: #ef4444; }
 
-    .sig-selected-red  { border-color: #ef4444; background: #fef2f2; color: #b91c1c; }
-    .sig-selected-blue { border-color: #3b82f6; background: #eff6ff; color: #1d4ed8; }
+    .countdown-num {
+      font-size: 1.7rem; font-weight: 700; color: #92400e;
+      min-width: 36px; text-align: center; line-height: 1;
+    }
+    .countdown-wrap.urgent .countdown-num { color: #991b1b; }
+
+    .countdown-right { flex: 1; }
+    .countdown-label { font-size: 0.78rem; color: #92400e; font-weight: 500; margin-bottom: 5px; }
+    .countdown-wrap.urgent .countdown-label { color: #991b1b; }
+
+    .countdown-track { height: 5px; background: #fde68a; border-radius: 3px; overflow: hidden; }
+    .countdown-wrap.urgent .countdown-track { background: #fecaca; }
+    .countdown-fill { height: 100%; background: #f59e0b; border-radius: 3px; transition: width 1s linear; }
+    .countdown-wrap.urgent .countdown-fill { background: #ef4444; }
 
     /* Urn buttons */
-    .urn-section { }
     .urn-hint { font-size: 0.82rem; color: #9ca3af; margin-bottom: 12px; }
-
     .urn-buttons { display: flex; gap: 12px; }
-
     .btn-urn {
-      flex: 1;
-      padding: 17px 10px;
-      background: white;
-      border: 2px solid #e5e7eb;
-      border-radius: 10px;
-      font-size: 1.05rem;
-      font-weight: 700;
-      cursor: pointer;
-      color: #111827;
+      flex: 1; padding: 17px 10px;
+      background: white; border: 2px solid #e5e7eb;
+      border-radius: 10px; font-size: 1.05rem; font-weight: 700;
+      cursor: pointer; color: #111827;
       transition: border-color 0.12s, background 0.12s;
     }
     .btn-urn:hover:not(:disabled) { border-color: #3b82f6; background: #eff6ff; color: #1d4ed8; }
@@ -226,13 +245,13 @@
 
     .decision-error { color: #dc2626; font-size: 0.85rem; margin-top: 12px; text-align: center; min-height: 20px; }
 
-    /* ── Thank-you screen ─────────────────────────── */
+    /* Thank-you screen */
     .thanks-wrap { text-align: center; padding: 20px 0 10px; }
     .thanks-icon { font-size: 3.2rem; margin-bottom: 12px; }
     .thanks-title { font-size: 1.35rem; font-weight: 700; color: #111827; margin-bottom: 8px; }
     .thanks-sub { font-size: 0.9rem; color: #6b7280; }
 
-    /* ── Screens ──────────────────────────────────── */
+    /* Screens */
     .screen { display: none; }
     .screen.active { display: block; }
   </style>
@@ -240,10 +259,21 @@
 <body>
 <div class="card">
 
-  <!-- ═══════════════════════════════════════════════════════
-       SCREEN 1 — Entry
-  ═══════════════════════════════════════════════════════ -->
-  <div id="screen-entry" class="screen active">
+  <!-- ═══ SCREEN 0 — Instructor (URL: ?instructor) ════ -->
+  <div id="screen-instructor" class="screen">
+    <div class="eyebrow">Instructor View</div>
+    <h1>Information Cascade</h1>
+    <p class="subtitle">Click Start when students are ready. Each sequential position will auto-advance if no decision is made within its allotted minute.</p>
+    <div id="exp-running-banner" style="display:none;" class="exp-running-msg"></div>
+    <button class="btn-primary" id="btn-start" onclick="instructorStart()">Start Experiment →</button>
+    <div id="instructor-timeline" style="margin-top:24px; display:none;">
+      <div class="section-label">Auto-advance Timeline</div>
+      <table class="timeline-table" id="timeline-table"></table>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN 1 — Entry ════════════════════════════ -->
+  <div id="screen-entry" class="screen">
     <div class="eyebrow">MBA Experiment</div>
     <h1>Information Cascade</h1>
     <p class="subtitle">Enter your information exactly as it appears on your sheet.</p>
@@ -264,16 +294,13 @@
     <input type="number" id="position-input" min="1" max="17" placeholder="e.g., 3">
 
     <div id="entry-error" class="error-msg"></div>
-
     <button class="btn-primary" onclick="startExperiment()">Enter →</button>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════
-       SCREEN 2 — Waiting
-  ═══════════════════════════════════════════════════════ -->
+  <!-- ═══ SCREEN 2 — Waiting ══════════════════════════ -->
   <div id="screen-waiting" class="screen">
     <div class="wait-title" id="wait-title"></div>
-    <div class="wait-group" id="wait-group"></div>
+    <div style="margin-bottom:24px;"></div>
     <div class="spinner-row">
       <div class="spinner"></div>
       <div class="wait-msg" id="wait-msg"></div>
@@ -282,46 +309,39 @@
     <div class="progress-dots" id="progress-dots"></div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════
-       SCREEN 3 — Decision
-  ═══════════════════════════════════════════════════════ -->
+  <!-- ═══ SCREEN 3 — Decision ═════════════════════════ -->
   <div id="screen-decision" class="screen">
     <div class="dec-title" id="dec-title"></div>
 
-    <!-- Prior decisions -->
     <div class="prior-section" id="prior-section"></div>
 
-    <!-- Signal picker -->
     <div class="signal-section">
       <div class="section-label">Your Private Signal</div>
-      <div class="signal-hint">Select the ball colour shown on your sheet.</div>
-      <div class="signal-options">
-        <div class="signal-option" id="sig-red" onclick="selectSignal('Red')">
-          <span class="signal-dot" style="background:#ef4444;"></span>
-          Red ball
-        </div>
-        <div class="signal-option" id="sig-blue" onclick="selectSignal('Blue')">
-          <span class="signal-dot" style="background:#3b82f6;"></span>
-          Blue ball
+      <div class="signal-display" id="signal-display">
+        <span class="signal-missing">Loading…</span>
+      </div>
+    </div>
+
+    <div class="countdown-wrap" id="countdown-wrap">
+      <div class="countdown-num" id="countdown-num">30</div>
+      <div class="countdown-right">
+        <div class="countdown-label" id="countdown-label">seconds to decide</div>
+        <div class="countdown-track">
+          <div class="countdown-fill" id="countdown-fill" style="width:100%"></div>
         </div>
       </div>
     </div>
 
-    <!-- Urn choice -->
-    <div class="urn-section">
-      <div class="section-label">Your Decision</div>
-      <div class="urn-hint">Urn A: 2 red, 1 blue &nbsp;·&nbsp; Urn B: 2 blue, 1 red</div>
-      <div class="urn-buttons">
-        <button class="btn-urn" id="btn-a" onclick="submitDecision('A')">Urn A</button>
-        <button class="btn-urn" id="btn-b" onclick="submitDecision('B')">Urn B</button>
-      </div>
-      <div class="decision-error" id="dec-error"></div>
+    <div class="section-label">Your Decision</div>
+    <div class="urn-hint">Urn A: 2 red, 1 blue &nbsp;·&nbsp; Urn B: 2 blue, 1 red</div>
+    <div class="urn-buttons">
+      <button class="btn-urn" id="btn-a" onclick="submitDecision('A')">Urn A</button>
+      <button class="btn-urn" id="btn-b" onclick="submitDecision('B')">Urn B</button>
     </div>
+    <div class="decision-error" id="dec-error"></div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════
-       SCREEN 4 — Thank you
-  ═══════════════════════════════════════════════════════ -->
+  <!-- ═══ SCREEN 4 — Thank you ════════════════════════ -->
   <div id="screen-thanks" class="screen">
     <div class="thanks-wrap">
       <div class="thanks-icon">✓</div>
@@ -332,15 +352,11 @@
 
 </div><!-- /.card -->
 
-<!-- Firebase v9 compat (no bundler needed) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
 <script>
 // ════════════════════════════════════════════════════════
-// STEP 1 — Paste your Firebase config here.
-//           Find it in: Firebase Console → Project Settings
-//           → Your apps → Config
+// Firebase config
 // ════════════════════════════════════════════════════════
 const firebaseConfig = {
   apiKey:            "AIzaSyBpZcHGN5qwxCnEL0dgrArjZC3oiD3mtZI",
@@ -353,8 +369,7 @@ const firebaseConfig = {
 };
 
 // ════════════════════════════════════════════════════════
-// STEP 2 — Adjust group sizes if your class changes.
-//           Keys must match the dropdown options above.
+// Group configuration
 // ════════════════════════════════════════════════════════
 const GROUP_CONFIG = {
   sequential_1: 8,
@@ -367,16 +382,53 @@ const GROUP_CONFIG = {
 };
 
 // ════════════════════════════════════════════════════════
+// Timing constants
+// ════════════════════════════════════════════════════════
+const DECISION_TIMEOUT_SECS = 30;   // on-screen countdown for the student
+const POSITION_TIMEOUT_MS   = 60000; // 1 min per sequential position from experiment start
+const MAX_SEQUENTIAL_SIZE   = 8;    // used for instructor timeline display
+
+// ════════════════════════════════════════════════════════
 // App state
 // ════════════════════════════════════════════════════════
-let db, groupRef;
-let myGroup      = null;
-let myPosition   = null;   // 1-indexed
-let isSequential = false;
-let selectedSignal = null;
+let db;
+let groupRef      = null;
+let myGroup       = null;
+let myPosition    = null;   // 1-indexed
+let isSequential  = false;
+let mySignal      = null;
+let decisionShown = false;
+let countdownInterval     = null;
+let countdownSecs         = DECISION_TIMEOUT_SECS;
+let countdownMaxSecs      = DECISION_TIMEOUT_SECS; // may be reduced to meet global deadline
+let experimentStart       = null;   // set when instructor clicks Start
 
+// Detect instructor mode via ?instructor in URL
+const isInstructor = new URLSearchParams(window.location.search).has('instructor');
+
+// ════════════════════════════════════════════════════════
+// Init
+// ════════════════════════════════════════════════════════
 firebase.initializeApp(firebaseConfig);
 db = firebase.database();
+
+// Subscribe to global experiment start time — all clients
+db.ref('meta/experiment_start').on('value', snap => {
+  experimentStart = snap.val();
+  if (isInstructor) renderInstructorTimeline();
+});
+
+// Periodically check deadlines:
+//   Instructor browser → checks ALL sequential groups (primary safety net)
+//   Student browser    → checks their own group (backup)
+setInterval(checkDeadlines, 10000);
+
+// Show correct initial screen
+if (isInstructor) {
+  showScreen('screen-instructor');
+} else {
+  showScreen('screen-entry');
+}
 
 // ════════════════════════════════════════════════════════
 // Utilities
@@ -392,9 +444,104 @@ function groupLabel(key) {
     : 'Sequential Group ' + key.split('_')[1];
 }
 
-// Firebase keys use prefix 'p' so numeric strings aren't coerced to arrays.
-function dbKey(i)   { return 'p' + i; }         // position index → "p0", "p1", …
-function fromDb(data, i) { return data[dbKey(i)] || null; }
+function dbKey(i)        { return 'p' + i; }
+function fromDb(data, i) { return (data && data[dbKey(i)]) || null; }
+
+function fmtTime(ts) {
+  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+// ════════════════════════════════════════════════════════
+// SCREEN 0 — Instructor
+// ════════════════════════════════════════════════════════
+function instructorStart() {
+  // Write start time only once (transaction: write if not already set)
+  db.ref('meta/experiment_start').transaction(cur => cur === null ? Date.now() : cur);
+}
+
+function renderInstructorTimeline() {
+  const btn    = document.getElementById('btn-start');
+  const banner = document.getElementById('exp-running-banner');
+  const block  = document.getElementById('instructor-timeline');
+  const table  = document.getElementById('timeline-table');
+
+  if (!experimentStart) {
+    btn.disabled = false;
+    btn.textContent = 'Start Experiment →';
+    banner.style.display = 'none';
+    block.style.display  = 'none';
+    return;
+  }
+
+  // Experiment is running
+  btn.disabled = true;
+  btn.textContent = 'Experiment Started ✓';
+
+  const endTime = experimentStart + MAX_SEQUENTIAL_SIZE * POSITION_TIMEOUT_MS;
+  banner.style.display = 'block';
+  banner.innerHTML =
+    'Started at <strong>' + fmtTime(experimentStart) + '</strong>. ' +
+    'All positions auto-advance by <strong>' + fmtTime(endTime) + '</strong>.';
+
+  // Build timeline table
+  let html = '<tr><th>Position</th><th>Auto-advance deadline</th></tr>';
+  for (let i = 1; i <= MAX_SEQUENTIAL_SIZE; i++) {
+    const deadline = experimentStart + i * POSITION_TIMEOUT_MS;
+    const past     = Date.now() > deadline;
+    html +=
+      '<tr class="' + (past ? 'fired' : '') + '">' +
+        '<td>Player ' + i + '</td>' +
+        '<td>' + fmtTime(deadline) + (past ? ' (fired)' : '') + '</td>' +
+      '</tr>';
+  }
+  table.innerHTML = html;
+  block.style.display = 'block';
+}
+
+// ════════════════════════════════════════════════════════
+// Deadline checking
+// Called every 10s (setInterval) and on each Firebase update
+// ════════════════════════════════════════════════════════
+function checkDeadlines() {
+  if (!experimentStart) return;
+  if (isInstructor) {
+    // Instructor checks ALL sequential groups
+    Object.keys(GROUP_CONFIG).forEach(key => {
+      if (key !== 'simultaneous') checkGroupDeadlines(key, null);
+    });
+    renderInstructorTimeline(); // keep table current
+  } else if (myGroup && isSequential) {
+    // Students check their own group only (backup)
+    checkGroupDeadlines(myGroup, null);
+  }
+}
+
+// Pass `data` to avoid an extra Firebase read when called from handleStateUpdate.
+// Pass `null` to trigger a fresh read (used by setInterval).
+function checkGroupDeadlines(groupKey, data) {
+  if (!experimentStart) return;
+
+  const doCheck = d => {
+    const size = GROUP_CONFIG[groupKey];
+    const ref  = db.ref('experiment/' + groupKey);
+    const now  = Date.now();
+    for (let i = 0; i < size; i++) {
+      const deadline = experimentStart + (i + 1) * POSITION_TIMEOUT_MS;
+      if (now > deadline && !fromDb(d, i)) {
+        ref.child(dbKey(i)).transaction(current => {
+          if (current !== null) return; // already written, abort transaction
+          return { action: Math.random() < 0.5 ? 'A' : 'B', signal: null, auto: true, timestamp: Date.now() };
+        });
+      }
+    }
+  };
+
+  if (data !== null) {
+    doCheck(data);
+  } else {
+    db.ref('experiment/' + groupKey).once('value', snap => doCheck(snap.val() || {}));
+  }
+}
 
 // ════════════════════════════════════════════════════════
 // SCREEN 1 — Entry
@@ -406,41 +553,53 @@ function startExperiment() {
   const errEl    = document.getElementById('entry-error');
   errEl.textContent = '';
 
-  if (!groupKey)            { errEl.textContent = 'Please select your group.'; return; }
-  if (!posRaw || pos < 1)   { errEl.textContent = 'Please enter your position number.'; return; }
+  if (!groupKey)          { errEl.textContent = 'Please select your group.'; return; }
+  if (!posRaw || pos < 1) { errEl.textContent = 'Please enter your position number.'; return; }
   const max = GROUP_CONFIG[groupKey];
-  if (pos > max) {
-    errEl.textContent = `Position for this group must be between 1 and ${max}.`; return;
-  }
+  if (pos > max) { errEl.textContent = `Position must be between 1 and ${max} for this group.`; return; }
 
   myGroup      = groupKey;
   myPosition   = pos;
-  isSequential = (groupKey !== 'simultaneous');
+  isSequential = groupKey !== 'simultaneous';
   groupRef     = db.ref('experiment/' + myGroup);
 
-  // Subscribe to real-time updates for this group
-  groupRef.on('value', snapshot => handleStateUpdate(snapshot.val() || {}));
+  // Fetch signal first, then subscribe — ensures signal is available when decision screen renders
+  db.ref('signals/' + myGroup + '/' + dbKey(pos - 1))
+    .once('value', snap => {
+      mySignal = snap.val();
+      groupRef.on('value', snapshot => handleStateUpdate(snapshot.val() || {}));
+    });
 }
 
 // ════════════════════════════════════════════════════════
-// Main state handler — called on every Firebase change
+// Main handler — fires on every Firebase group change
 // ════════════════════════════════════════════════════════
 function handleStateUpdate(data) {
   const size      = GROUP_CONFIG[myGroup];
   const decisions = Array.from({ length: size }, (_, i) => fromDb(data, i));
-  const myIdx     = myPosition - 1;  // 0-indexed
+  const myIdx     = myPosition - 1;
+
+  // Check deadlines inline (using already-fetched data — no extra DB read)
+  if (isSequential) checkGroupDeadlines(myGroup, data);
 
   // Already submitted?
-  if (decisions[myIdx]) { showScreen('screen-thanks'); return; }
-
-  if (!isSequential) {
-    renderDecision(decisions);
+  if (decisions[myIdx]) {
+    stopCountdown();
+    showScreen('screen-thanks');
     return;
   }
 
-  // Sequential: all prior players must have submitted first
+  if (!isSequential) {
+    if (!decisionShown) { decisionShown = true; renderDecision(decisions); }
+    return;
+  }
+
   const priorDone = decisions.slice(0, myIdx).every(d => d !== null);
-  priorDone ? renderDecision(decisions) : renderWaiting(decisions);
+  if (priorDone) {
+    if (!decisionShown) { decisionShown = true; renderDecision(decisions); }
+  } else {
+    renderWaiting(decisions);
+  }
 }
 
 // ════════════════════════════════════════════════════════
@@ -460,28 +619,25 @@ function renderWaiting(decisions) {
   document.getElementById('wait-msg').textContent =
     'Waiting for Player' + s + ' ' + pending.join(', ') + ' to decide.';
 
-  // Progress dots
   const dotsEl = document.getElementById('progress-dots');
   dotsEl.innerHTML = '';
   decisions.forEach((d, i) => {
     const dot = document.createElement('div');
-    dot.className = 'dot ';
     if (i === myPosition - 1) {
-      dot.className += 'dot-me';
-      dot.textContent = i + 1;
+      dot.className = 'dot dot-me'; dot.textContent = i + 1;
+    } else if (d && d.auto) {
+      dot.className = 'dot dot-auto'; dot.textContent = d.action;
     } else if (d) {
-      dot.className += 'dot-done';
-      dot.textContent = d.action;
+      dot.className = 'dot dot-done'; dot.textContent = d.action;
     } else {
-      dot.className += 'dot-pending';
-      dot.textContent = i + 1;
+      dot.className = 'dot dot-pending'; dot.textContent = i + 1;
     }
     dotsEl.appendChild(dot);
   });
 }
 
 // ════════════════════════════════════════════════════════
-// SCREEN 3 — Decision
+// SCREEN 3 — Decision (rendered only once per student)
 // ════════════════════════════════════════════════════════
 function renderDecision(decisions) {
   showScreen('screen-decision');
@@ -489,82 +645,136 @@ function renderDecision(decisions) {
   document.getElementById('dec-title').textContent =
     groupLabel(myGroup) + ' — Player ' + myPosition;
 
-  // Reset signal selection (in case of re-render)
-  selectedSignal = null;
-  document.getElementById('sig-red').className  = 'signal-option';
-  document.getElementById('sig-blue').className = 'signal-option';
-  document.getElementById('dec-error').textContent = '';
-  document.getElementById('btn-a').disabled = false;
-  document.getElementById('btn-b').disabled = false;
-
-  // Prior decisions section
+  // Prior decisions
   const priorEl = document.getElementById('prior-section');
-
   if (!isSequential) {
     priorEl.innerHTML =
       '<div class="section-label">Prior Decisions</div>' +
       '<p class="note-text">You are in the simultaneous group — you do not observe others\' decisions.</p>';
-    return;
+  } else {
+    const prior = decisions.slice(0, myPosition - 1);
+    if (prior.length === 0) {
+      priorEl.innerHTML =
+        '<div class="section-label">Prior Decisions</div>' +
+        '<p class="note-text">You are Player 1 — no prior decisions to observe.</p>';
+    } else {
+      let html = '<div class="section-label">Prior Decisions</div><div class="prior-box">';
+      prior.forEach((d, i) => {
+        html +=
+          '<div class="decision-row">' +
+            '<span class="pl">Player ' + (i + 1) + '</span>' +
+            '<span class="urn">Urn ' + (d ? d.action : '—') + '</span>' +
+          '</div>';
+      });
+      html += '</div>';
+      priorEl.innerHTML = html;
+    }
   }
 
-  const prior = decisions.slice(0, myPosition - 1);
-
-  if (prior.length === 0) {
-    priorEl.innerHTML =
-      '<div class="section-label">Prior Decisions</div>' +
-      '<p class="note-text">You are Player 1 — no prior decisions to observe.</p>';
-    return;
-  }
-
-  let html = '<div class="section-label">Prior Decisions</div><div class="prior-box">';
-  prior.forEach((d, i) => {
-    html +=
-      '<div class="decision-row">' +
-        '<span class="pl">Player ' + (i + 1) + '</span>' +
-        '<span class="urn">Urn ' + (d ? d.action : '—') + '</span>' +
-      '</div>';
-  });
-  html += '</div>';
-  priorEl.innerHTML = html;
+  renderSignal();
+  startCountdown();
 }
 
 // ════════════════════════════════════════════════════════
-// Signal selection (visual toggle)
+// Signal display (read-only, from /signals/ in Firebase)
 // ════════════════════════════════════════════════════════
-function selectSignal(colour) {
-  selectedSignal = colour;
-  document.getElementById('sig-red').className  =
-    'signal-option' + (colour === 'Red'  ? ' sig-selected-red'  : '');
-  document.getElementById('sig-blue').className =
-    'signal-option' + (colour === 'Blue' ? ' sig-selected-blue' : '');
+function renderSignal() {
+  const el = document.getElementById('signal-display');
+  if (!mySignal) {
+    el.innerHTML = '<span class="signal-missing">Signal not found. Check your group and position number.</span>';
+    return;
+  }
+  const color = mySignal === 'Red' ? '#ef4444' : '#3b82f6';
+  el.innerHTML =
+    '<span class="signal-ball" style="background:' + color + ';box-shadow:0 0 0 2px white,0 0 0 3px ' + color + ';"></span>' +
+    '<span class="signal-text">' + mySignal + ' ball</span>';
 }
 
 // ════════════════════════════════════════════════════════
-// Submit decision
+// Countdown timer
+//
+// The countdown starts at min(30s, time remaining until global deadline).
+// This ensures the visual timer never promises more time than is available.
 // ════════════════════════════════════════════════════════
-function submitDecision(urnChoice) {
-  const errEl = document.getElementById('dec-error');
+function getInitialCountdownSecs() {
+  if (!experimentStart || !isSequential) return DECISION_TIMEOUT_SECS;
+  const globalDeadlineMs  = experimentStart + myPosition * POSITION_TIMEOUT_MS;
+  const secsUntilDeadline = Math.floor((globalDeadlineMs - Date.now()) / 1000);
+  return Math.min(DECISION_TIMEOUT_SECS, Math.max(1, secsUntilDeadline));
+}
 
-  if (!selectedSignal) {
-    errEl.textContent = 'Please select your private signal before choosing a urn.';
-    return;
+function startCountdown() {
+  countdownMaxSecs = getInitialCountdownSecs();
+  countdownSecs    = countdownMaxSecs;
+  updateCountdownUI();
+
+  countdownInterval = setInterval(() => {
+    countdownSecs--;
+    updateCountdownUI();
+    if (countdownSecs <= 0) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+      autoSubmit();
+    }
+  }, 1000);
+}
+
+function stopCountdown() {
+  if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+}
+
+function updateCountdownUI() {
+  const numEl  = document.getElementById('countdown-num');
+  const fillEl = document.getElementById('countdown-fill');
+  const wrapEl = document.getElementById('countdown-wrap');
+  const lblEl  = document.getElementById('countdown-label');
+  if (!numEl) return;
+
+  numEl.textContent  = countdownSecs;
+  fillEl.style.width = (countdownSecs / countdownMaxSecs * 100) + '%';
+
+  if (countdownSecs <= 10) {
+    wrapEl.classList.add('urgent');
+    lblEl.textContent = 'seconds left — decide now!';
   }
-  errEl.textContent = '';
+}
 
-  // Disable buttons immediately to prevent double-submit
+// ════════════════════════════════════════════════════════
+// Auto-submit when countdown expires
+// ════════════════════════════════════════════════════════
+function autoSubmit() {
   document.getElementById('btn-a').disabled = true;
   document.getElementById('btn-b').disabled = true;
 
   groupRef.child(dbKey(myPosition - 1)).set({
+    action:    Math.random() < 0.5 ? 'A' : 'B',
+    signal:    mySignal,
+    auto:      true,
+    timestamp: Date.now()
+  });
+  // Firebase listener fires → handleStateUpdate → screen-thanks
+}
+
+// ════════════════════════════════════════════════════════
+// Manual submit
+// ════════════════════════════════════════════════════════
+function submitDecision(urnChoice) {
+  stopCountdown();
+  document.getElementById('btn-a').disabled = true;
+  document.getElementById('btn-b').disabled = true;
+  document.getElementById('dec-error').textContent = '';
+
+  groupRef.child(dbKey(myPosition - 1)).set({
     action:    urnChoice,
-    signal:    selectedSignal,
-    timestamp: firebase.database.ServerValue.TIMESTAMP
+    signal:    mySignal,
+    auto:      false,
+    timestamp: Date.now()
   }).catch(() => {
-    errEl.textContent = 'Could not save your decision. Check your connection and try again.';
+    document.getElementById('dec-error').textContent =
+      'Could not save your decision. Check your connection and try again.';
     document.getElementById('btn-a').disabled = false;
     document.getElementById('btn-b').disabled = false;
   });
-  // On success the Firebase listener fires → handleStateUpdate → screen-thanks
 }
 </script>
 </body>
