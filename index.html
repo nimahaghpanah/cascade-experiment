@@ -639,9 +639,12 @@ function renderResultsGrid(state, activeGroups) {
 function instructorStart() {
   const raw = parseInt(document.getElementById('num-groups-input').value, 10);
   const numGroups = Math.min(6, Math.max(1, isNaN(raw) ? 6 : raw));
-  db.ref('meta/num_sequential_groups').set(numGroups);
-  // Write start time only once (transaction: write if not already set)
-  db.ref('meta/experiment_start').transaction(cur => cur === null ? Date.now() : cur);
+  // Wipe all previous decisions and start fresh
+  db.ref('experiment').set(null);
+  db.ref('meta').set({
+    num_sequential_groups: numGroups,
+    experiment_start: Date.now()
+  });
 }
 
 function renderInstructorTimeline() {
@@ -661,10 +664,10 @@ function renderInstructorTimeline() {
     return;
   }
 
-  // Experiment is running
-  btn.disabled = true;
-  btn.textContent = 'Experiment Started ✓';
-  if (numGroupsInput) numGroupsInput.disabled = true;
+  // Experiment is running — keep button active so instructor can restart
+  btn.disabled = false;
+  btn.textContent = 'Restart Experiment →';
+  if (numGroupsInput) numGroupsInput.disabled = false;
 
   const endTime = experimentStart + MAX_SEQUENTIAL_SIZE * POSITION_TIMEOUT_MS;
   banner.style.display = 'block';
