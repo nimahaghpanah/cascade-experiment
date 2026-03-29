@@ -639,11 +639,13 @@ function renderResultsGrid(state, activeGroups) {
 function instructorStart() {
   const raw = parseInt(document.getElementById('num-groups-input').value, 10);
   const numGroups = Math.min(6, Math.max(1, isNaN(raw) ? 6 : raw));
-  // Wipe all previous decisions and start fresh
-  db.ref('experiment').set(null);
+  // Set meta first so experimentStart is in the future before experiment is cleared.
+  // This prevents the deadline checker from auto-advancing positions during the wipe.
   db.ref('meta').set({
     num_sequential_groups: numGroups,
     experiment_start: Date.now()
+  }).then(() => {
+    db.ref('experiment').set(null);
   });
 }
 
