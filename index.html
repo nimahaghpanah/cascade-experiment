@@ -134,6 +134,20 @@
       line-height: 1.5;
     }
 
+    .btn-wipe {
+      width: 100%;
+      padding: 10px;
+      background: white;
+      color: #b45309;
+      border: 1.5px solid #fcd34d;
+      border-radius: 9px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 14px;
+    }
+    .btn-wipe:hover { background: #fffbeb; border-color: #f59e0b; }
+
     /* ── Waiting screen ──────────────────────────────── */
     .wait-title { font-size: 1.05rem; font-weight: 600; color: #111827; margin-bottom: 5px; }
 
@@ -360,6 +374,8 @@
     <p class="subtitle">Set the number of sequential groups, then click Start when students are ready. Each sequential position will auto-advance if no decision is made within 30 seconds.</p>
     <label class="field-label" for="num-groups-input">Number of Sequential Groups (1–6)</label>
     <input type="number" id="num-groups-input" min="1" max="6" value="6">
+    <button class="btn-wipe" id="btn-wipe" onclick="wipeData()">⚠ Wipe All Data</button>
+    <div id="wipe-confirm" style="display:none; font-size:0.82rem; color:#6b7280; margin: -10px 0 14px; text-align:center;">Data wiped.</div>
     <div id="exp-running-banner" style="display:none;" class="exp-running-msg"></div>
     <button class="btn-primary" id="btn-start" onclick="instructorStart()">Start Experiment →</button>
     <div id="instructor-timeline" style="margin-top:24px; display:none;">
@@ -636,18 +652,25 @@ function renderResultsGrid(state, activeGroups) {
 // ════════════════════════════════════════════════════════
 // SCREEN 0 — Instructor
 // ════════════════════════════════════════════════════════
+function wipeData() {
+  // Wipe experiment data while experimentStart is still null/old —
+  // checkDeadlines returns early when experimentStart is null, so no race condition.
+  experimentStart = null;
+  db.ref('experiment').set(null);
+  db.ref('meta/experiment_start').set(null);
+  const msg = document.getElementById('wipe-confirm');
+  msg.style.display = 'block';
+  setTimeout(() => msg.style.display = 'none', 3000);
+}
+
 function instructorStart() {
   const raw = parseInt(document.getElementById('num-groups-input').value, 10);
   const numGroups = Math.min(6, Math.max(1, isNaN(raw) ? 6 : raw));
   const newStart = Date.now();
-  // Update local experimentStart immediately so the deadline checker
-  // never sees the old timestamp during the Firebase wipe — eliminates race condition.
   experimentStart = newStart;
   db.ref('meta').set({
     num_sequential_groups: numGroups,
     experiment_start: newStart
-  }).then(() => {
-    db.ref('experiment').set(null);
   });
 }
 
