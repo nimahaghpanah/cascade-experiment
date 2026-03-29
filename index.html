@@ -357,7 +357,9 @@
   <div id="screen-instructor" class="screen">
     <div class="eyebrow">Instructor View</div>
     <h1>Information Cascade</h1>
-    <p class="subtitle">Click Start when students are ready. Each sequential position will auto-advance if no decision is made within 30 seconds.</p>
+    <p class="subtitle">Set the number of sequential groups, then click Start when students are ready. Each sequential position will auto-advance if no decision is made within 30 seconds.</p>
+    <label class="field-label" for="num-groups-input">Number of Sequential Groups (1–6)</label>
+    <input type="number" id="num-groups-input" min="1" max="6" value="6">
     <div id="exp-running-banner" style="display:none;" class="exp-running-msg"></div>
     <button class="btn-primary" id="btn-start" onclick="instructorStart()">Start Experiment →</button>
     <div id="instructor-timeline" style="margin-top:24px; display:none;">
@@ -432,10 +434,9 @@
     </div>
 
     <div class="section-label">Your Decision</div>
-    <div class="urn-hint">Blue Urn: 2 red, 1 blue &nbsp;·&nbsp; Red Urn: 2 blue, 1 red</div>
     <div class="urn-buttons">
-      <button class="btn-urn" id="btn-a" onclick="submitDecision('A')" style="color:#1d4ed8; border-color:#93c5fd;">Blue Urn</button>
-      <button class="btn-urn" id="btn-b" onclick="submitDecision('B')" style="color:#dc2626; border-color:#fca5a5;">Red Urn</button>
+      <button class="btn-urn" id="btn-a" onclick="submitDecision('A')" style="color:#1d4ed8; border-color:#93c5fd;">Blue Product</button>
+      <button class="btn-urn" id="btn-b" onclick="submitDecision('B')" style="color:#dc2626; border-color:#fca5a5;">Red Product</button>
     </div>
     <div class="decision-error" id="dec-error"></div>
   </div>
@@ -447,6 +448,7 @@
       <div class="thanks-title">Thank you!</div>
       <div class="thanks-sub">Your decision has been recorded.</div>
     </div>
+    <div id="thanks-group-results" style="margin-top:28px;"></div>
   </div>
 
 </div><!-- /.card -->
@@ -569,28 +571,32 @@ function initResults() {
     </div>
     <div class="results-grid" id="results-grid"></div>`;
 
-  const groups = Object.keys(GROUP_CONFIG);
-  const state  = {}; // groupKey -> { signals: {}, decisions: {} }
+  // Read active group count from Firebase (set by instructor at Start)
+  db.ref('meta/num_sequential_groups').once('value', snap => {
+    const numSeq = snap.val() || 6;
+    const activeGroups = [];
+    for (let i = 1; i <= numSeq; i++) activeGroups.push('sequential_' + i);
+    activeGroups.push('simultaneous');
 
-  groups.forEach(gk => {
-    state[gk] = { signals: {}, decisions: {} };
-    // subscribe to signals (read-once is fine but live is consistent)
-    db.ref('signals/' + gk).on('value', snap => {
-      state[gk].signals = snap.val() || {};
-      renderResultsGrid(state);
-    });
-    // subscribe to decisions live
-    db.ref('experiment/' + gk).on('value', snap => {
-      state[gk].decisions = snap.val() || {};
-      renderResultsGrid(state);
+    const state = {}; // groupKey -> { signals: {}, decisions: {} }
+    activeGroups.forEach(gk => {
+      state[gk] = { signals: {}, decisions: {} };
+      db.ref('signals/' + gk).on('value', snap => {
+        state[gk].signals = snap.val() || {};
+        renderResultsGrid(state, activeGroups);
+      });
+      db.ref('experiment/' + gk).on('value', snap => {
+        state[gk].decisions = snap.val() || {};
+        renderResultsGrid(state, activeGroups);
+      });
     });
   });
 }
 
-function renderResultsGrid(state) {
+function renderResultsGrid(state, activeGroups) {
   const grid = document.getElementById('results-grid');
   if (!grid) return;
-  const groups = Object.keys(GROUP_CONFIG);
+  const groups = activeGroups || Object.keys(GROUP_CONFIG);
   grid.innerHTML = groups.map(gk => {
     const size = GROUP_CONFIG[gk];
     const sigs = state[gk].signals;
@@ -607,7 +613,7 @@ function renderResultsGrid(state) {
       if (!dec) {
         choiceHtml = `<span class="choice-pending">pending</span>`;
       } else {
-        const label = dec.action === 'A' ? 'Blue Urn' : 'Red Urn';
+        const label = dec.action === 'A' ? 'Blue Product' : 'Red Product';
         const cls   = dec.action === 'A' ? 'choice-a' : 'choice-b';
         choiceHtml  = `<span class="${cls}">${label}</span>`;
       }
@@ -631,6 +637,9 @@ function renderResultsGrid(state) {
 // SCREEN 0 — Instructor
 // ════════════════════════════════════════════════════════
 function instructorStart() {
+  const raw = parseInt(document.getElementById('num-groups-input').value, 10);
+  const numGroups = Math.min(6, Math.max(1, isNaN(raw) ? 6 : raw));
+  db.ref('meta/num_sequential_groups').set(numGroups);
   // Write start time only once (transaction: write if not already set)
   db.ref('meta/experiment_start').transaction(cur => cur === null ? Date.now() : cur);
 }
@@ -641,9 +650,12 @@ function renderInstructorTimeline() {
   const block  = document.getElementById('instructor-timeline');
   const table  = document.getElementById('timeline-table');
 
+  const numGroupsInput = document.getElementById('num-groups-input');
+
   if (!experimentStart) {
     btn.disabled = false;
     btn.textContent = 'Start Experiment →';
+    if (numGroupsInput) numGroupsInput.disabled = false;
     banner.style.display = 'none';
     block.style.display  = 'none';
     return;
@@ -652,6 +664,7 @@ function renderInstructorTimeline() {
   // Experiment is running
   btn.disabled = true;
   btn.textContent = 'Experiment Started ✓';
+  if (numGroupsInput) numGroupsInput.disabled = true;
 
   const endTime = experimentStart + MAX_SEQUENTIAL_SIZE * POSITION_TIMEOUT_MS;
   banner.style.display = 'block';
@@ -762,6 +775,7 @@ function handleStateUpdate(data) {
   if (decisions[myIdx]) {
     stopCountdown();
     showScreen('screen-thanks');
+    initThanksResults();
     return;
   }
 
@@ -839,8 +853,8 @@ function renderDecision(decisions) {
           '<div class="decision-row">' +
             '<span class="pl">Player ' + (i + 1) + '</span>' +
             (d ? (d.action === 'A'
-              ? '<span class="urn" style="color:#1d4ed8;">Blue Urn</span>'
-              : '<span class="urn" style="color:#dc2626;">Red Urn</span>')
+              ? '<span class="urn" style="color:#1d4ed8;">Blue Product</span>'
+              : '<span class="urn" style="color:#dc2626;">Red Product</span>')
               : '<span class="urn">—</span>') +
           '</div>';
       });
@@ -865,7 +879,7 @@ function renderSignal() {
   const color = mySignal === 'Red' ? '#ef4444' : '#3b82f6';
   el.innerHTML =
     '<span class="signal-ball" style="background:' + color + ';box-shadow:0 0 0 2px white,0 0 0 3px ' + color + ';"></span>' +
-    '<span class="signal-text">' + mySignal + ' ball</span>';
+    '<span class="signal-text">' + mySignal + ' seems better</span>';
 }
 
 // ════════════════════════════════════════════════════════
@@ -931,6 +945,71 @@ function autoSubmit() {
     timestamp: Date.now()
   });
   // Firebase listener fires → handleStateUpdate → screen-thanks
+}
+
+// ════════════════════════════════════════════════════════
+// SCREEN 4 — Thank-you group results
+// ════════════════════════════════════════════════════════
+let thanksResultsInit = false;
+
+function initThanksResults() {
+  if (thanksResultsInit) return;
+  thanksResultsInit = true;
+
+  // Widen card so the table has room
+  document.querySelector('.card').style.maxWidth = '600px';
+
+  const size  = GROUP_CONFIG[myGroup];
+  const state = { signals: {}, decisions: {} };
+
+  db.ref('signals/' + myGroup).on('value', snap => {
+    state.signals = snap.val() || {};
+    renderThanksGroup(state, size);
+  });
+  db.ref('experiment/' + myGroup).on('value', snap => {
+    state.decisions = snap.val() || {};
+    renderThanksGroup(state, size);
+  });
+}
+
+function renderThanksGroup(state, size) {
+  const container = document.getElementById('thanks-group-results');
+  if (!container) return;
+
+  const sigs    = state.signals;
+  const decs    = state.decisions;
+  const decided = Object.keys(decs).length;
+
+  const rows = Array.from({ length: size }, (_, i) => {
+    const key = 'p' + i;
+    const sig = sigs[key] || null;
+    const dec = decs[key] || null;
+    const isMe = (i === myPosition - 1);
+
+    const sigHtml = sig
+      ? `<span class="sig-pill"><span class="sig-dot sig-${sig.toLowerCase()}"></span>${sig}</span>`
+      : `<span class="choice-pending">—</span>`;
+
+    let choiceHtml;
+    if (!dec) {
+      choiceHtml = `<span class="choice-pending">pending</span>`;
+    } else {
+      const label = dec.action === 'A' ? 'Blue Product' : 'Red Product';
+      const cls   = dec.action === 'A' ? 'choice-a' : 'choice-b';
+      choiceHtml  = `<span class="${cls}">${label}</span>`;
+    }
+
+    const rowStyle = isMe ? ' style="background:#f0fdf4;"' : '';
+    const meMarker = isMe ? ' <span style="font-size:0.72rem;color:#15803d;font-weight:600;">YOU</span>' : '';
+    return `<tr${rowStyle}><td>${i + 1}${meMarker}</td><td>${sigHtml}</td><td>${choiceHtml}</td></tr>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="section-label">${groupLabel(myGroup)} &nbsp;·&nbsp; ${decided}/${size} decided</div>
+    <table class="rg-table">
+      <thead><tr><th>Player</th><th>Signal</th><th>Choice</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
 }
 
 // ════════════════════════════════════════════════════════
