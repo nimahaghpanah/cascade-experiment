@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Information Cascade Experiment</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f7fa;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 28px 16px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 36px 32px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+
+    .eyebrow {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #9ca3af;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #6b7280;
+      line-height: 1.55;
+      margin-bottom: 28px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #6b7280;
+      margin-bottom: 7px;
+    }
+
+    select, input[type="number"] {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 9px;
+      font-size: 1rem;
+      color: #111827;
+      background: white;
+      margin-bottom: 20px;
+    }
+    select { appearance: none; -webkit-appearance: none; cursor: pointer; }
+    select:focus, input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 13px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 9px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 2px;
+    }
+    .btn-primary:hover:not(:disabled) { background: #1d4ed8; }
+    .btn-primary:disabled { background: #93c5fd; cursor: default; }
+
+    .error-msg {
+      color: #dc2626;
+      font-size: 0.85rem;
+      margin-top: -12px;
+      margin-bottom: 14px;
+    }
+
+    /* ── Instructor screen ───────────────────────────── */
+    .timeline-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      margin-top: 6px;
+    }
+    .timeline-table th {
+      text-align: left;
+      color: #9ca3af;
+      font-weight: 600;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      padding: 4px 0 8px;
+    }
+    .timeline-table th:last-child { text-align: right; }
+    .timeline-table td {
+      padding: 5px 0;
+      color: #374151;
+      border-top: 1px solid #f3f4f6;
+    }
+    .timeline-table td:last-child { text-align: right; color: #6b7280; }
+    .timeline-table tr.fired td { color: #9ca3af; text-decoration: line-through; }
+
+    .exp-running-msg {
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      border-radius: 9px;
+      padding: 12px 16px;
+      font-size: 0.88rem;
+      color: #166534;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    /* ── Waiting screen ──────────────────────────────── */
+    .wait-title { font-size: 1.05rem; font-weight: 600; color: #111827; margin-bottom: 5px; }
+
+    .spinner-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2.5px solid #e5e7eb;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.85s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .wait-msg { font-size: 0.92rem; color: #374151; line-height: 1.55; margin-bottom: 26px; }
+
+    .section-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #9ca3af;
+      margin-bottom: 10px;
+    }
+
+    .progress-dots { display: flex; flex-wrap: wrap; gap: 8px; }
+    .dot {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.78rem; font-weight: 700;
+    }
+    .dot-pending { background: #f3f4f6; color: #9ca3af; }
+    .dot-done    { background: #d1fae5; color: #065f46; }
+    .dot-auto    { background: #d1fae5; color: #065f46; }
+    .dot-blue    { background: #dbeafe; color: #1d4ed8; }
+    .dot-red     { background: #fee2e2; color: #dc2626; }
+    .dot-me      { background: #dcfce7; color: #15803d; outline: 2px solid #22c55e; }
+
+    /* ── Decision screen ─────────────────────────────── */
+    .dec-title { font-size: 1.05rem; font-weight: 600; color: #111827; margin-bottom: 20px; }
+
+    .prior-box {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 6px;
+    }
+    .decision-row {
+      display: flex; justify-content: space-between;
+      padding: 5px 0; font-size: 0.93rem; color: #374151;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .decision-row:last-child { border-bottom: none; }
+    .decision-row .pl  { color: #6b7280; }
+    .decision-row .urn { font-weight: 700; color: #111827; }
+
+    .note-text { font-size: 0.88rem; color: #6b7280; font-style: italic; margin-bottom: 6px; }
+    .prior-section { margin-bottom: 24px; }
+
+    /* Signal display */
+    .signal-section { margin-bottom: 24px; }
+    .signal-display {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 18px;
+      border-radius: 10px;
+      border: 2px solid #e5e7eb;
+      background: #f9fafb;
+    }
+    .signal-ball { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; }
+    .signal-text { font-size: 1.05rem; font-weight: 600; color: #111827; }
+    .signal-missing { font-size: 0.88rem; color: #dc2626; font-style: italic; }
+
+    /* Countdown */
+    .countdown-wrap {
+      display: flex; align-items: center; gap: 14px;
+      background: #fffbeb; border: 1.5px solid #fbbf24;
+      border-radius: 10px; padding: 12px 16px; margin-bottom: 24px;
+      transition: background 0.4s, border-color 0.4s;
+    }
+    .countdown-wrap.urgent { background: #fef2f2; border-color: #ef4444; }
+
+    .countdown-num {
+      font-size: 1.7rem; font-weight: 700; color: #92400e;
+      min-width: 36px; text-align: center; line-height: 1;
+    }
+    .countdown-wrap.urgent .countdown-num { color: #991b1b; }
+
+    .countdown-right { flex: 1; }
+    .countdown-label { font-size: 0.78rem; color: #92400e; font-weight: 500; margin-bottom: 5px; }
+    .countdown-wrap.urgent .countdown-label { color: #991b1b; }
+
+    .countdown-track { height: 5px; background: #fde68a; border-radius: 3px; overflow: hidden; }
+    .countdown-wrap.urgent .countdown-track { background: #fecaca; }
+    .countdown-fill { height: 100%; background: #f59e0b; border-radius: 3px; transition: width 1s linear; }
+    .countdown-wrap.urgent .countdown-fill { background: #ef4444; }
+
+    /* Urn buttons */
+    .urn-hint { font-size: 0.82rem; color: #9ca3af; margin-bottom: 12px; }
+    .urn-buttons { display: flex; gap: 12px; }
+    .btn-urn {
+      flex: 1; padding: 17px 10px;
+      background: white; border: 2px solid #e5e7eb;
+      border-radius: 10px; font-size: 1.05rem; font-weight: 700;
+      cursor: pointer; color: #111827;
+      transition: border-color 0.12s, background 0.12s;
+    }
+    .btn-urn:hover:not(:disabled) { border-color: #3b82f6; background: #eff6ff; color: #1d4ed8; }
+    .btn-urn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .decision-error { color: #dc2626; font-size: 0.85rem; margin-top: 12px; text-align: center; min-height: 20px; }
+
+    /* Thank-you screen */
+    .thanks-wrap { text-align: center; padding: 20px 0 10px; }
+    .thanks-icon { font-size: 3.2rem; margin-bottom: 12px; }
+    .thanks-title { font-size: 1.35rem; font-weight: 700; color: #111827; margin-bottom: 8px; }
+    .thanks-sub { font-size: 0.9rem; color: #6b7280; }
+
+    /* Screens */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ── Results panel ───────────────────────────────── */
+    .results-body {
+      max-width: 960px;
+      width: 100%;
+      padding: 28px 16px 48px;
+    }
+    .results-header {
+      margin-bottom: 28px;
+    }
+    .results-header h1 { font-size: 1.5rem; font-weight: 700; color: #111827; }
+    .results-header .subtitle { font-size: 0.88rem; color: #6b7280; margin-top: 4px; }
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .results-group-card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px 20px 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    }
+    .results-group-card.simultaneous {
+      grid-column: 1 / -1;
+    }
+    .rg-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+    .rg-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    .rg-table th {
+      text-align: left;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #9ca3af;
+      padding: 0 6px 8px 6px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .rg-table td {
+      padding: 7px 6px;
+      border-bottom: 1px solid #f9fafb;
+      color: #374151;
+      vertical-align: middle;
+    }
+    .rg-table tr:last-child td { border-bottom: none; }
+    .sig-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+    }
+    .sig-dot {
+      width: 11px; height: 11px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .sig-red  { background: #ef4444; }
+    .sig-blue { background: #3b82f6; }
+    .choice-a { color: #1d4ed8; font-weight: 700; }  /* Blue Urn */
+    .choice-b { color: #dc2626; font-weight: 700; }  /* Red Urn */
+    .choice-pending { color: #d1d5db; font-style: italic; }
+    .auto-badge {
+      font-size: 0.65rem;
+      background: #fef3c7;
+      color: #92400e;
+      border-radius: 4px;
+      padding: 1px 5px;
+      margin-left: 4px;
+      font-weight: 600;
+    }
+    .live-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      margin-right: 6px;
+      animation: pulse 1.6s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+
+  <!-- ═══ SCREEN 0 — Instructor (URL: ?instructor) ════ -->
+  <div id="screen-instructor" class="screen">
+    <div class="eyebrow">Instructor View</div>
+    <h1>Information Cascade</h1>
+    <p class="subtitle">Set the number of sequential groups, then click Start when students are ready. Each sequential position will auto-advance if no decision is made within 30 seconds.</p>
+    <label class="field-label" for="num-groups-input">Number of Sequential Groups (1–6)</label>
+    <input type="number" id="num-groups-input" min="1" max="6" value="6">
+    <div id="exp-running-banner" style="display:none;" class="exp-running-msg"></div>
+    <button class="btn-primary" id="btn-start" onclick="instructorStart()">Start Experiment →</button>
+    <div id="instructor-timeline" style="margin-top:24px; display:none;">
+      <div class="section-label">Auto-advance Timeline</div>
+      <table class="timeline-table" id="timeline-table"></table>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN R — Results (URL: ?results) ══════════ -->
+  <div id="screen-results" class="screen">
+    <div id="results-root"></div>
+  </div>
+
+  <!-- ═══ SCREEN 1 — Entry ════════════════════════════ -->
+  <div id="screen-entry" class="screen">
+    <div class="eyebrow">MBA Experiment</div>
+    <h1>Information Cascade</h1>
+    <p class="subtitle">Enter your information exactly as it appears on your sheet.</p>
+
+    <label class="field-label" for="group-select">Your Group</label>
+    <select id="group-select">
+      <option value="">— Select your group —</option>
+      <option value="sequential_1">Sequential Group 1</option>
+      <option value="sequential_2">Sequential Group 2</option>
+      <option value="sequential_3">Sequential Group 3</option>
+      <option value="sequential_4">Sequential Group 4</option>
+      <option value="sequential_5">Sequential Group 5</option>
+      <option value="sequential_6">Sequential Group 6</option>
+      <option value="simultaneous">Simultaneous Group</option>
+    </select>
+
+    <label class="field-label" for="position-input">Your Position Number</label>
+    <input type="number" id="position-input" min="1" max="17" placeholder="e.g., 3">
+
+    <div id="entry-error" class="error-msg"></div>
+    <button class="btn-primary" onclick="startExperiment()">Enter →</button>
+  </div>
+
+  <!-- ═══ SCREEN 2 — Waiting ══════════════════════════ -->
+  <div id="screen-waiting" class="screen">
+    <div class="wait-title" id="wait-title"></div>
+    <div style="margin-bottom:24px;"></div>
+    <div class="spinner-row">
+      <div class="spinner"></div>
+      <div class="wait-msg" id="wait-msg"></div>
+    </div>
+    <div class="section-label">Group Progress</div>
+    <div class="progress-dots" id="progress-dots"></div>
+  </div>
+
+  <!-- ═══ SCREEN 3 — Decision ═════════════════════════ -->
+  <div id="screen-decision" class="screen">
+    <div class="dec-title" id="dec-title"></div>
+
+    <div class="prior-section" id="prior-section"></div>
+
+    <div class="signal-section">
+      <div class="section-label">Your Private Signal</div>
+      <div class="signal-display" id="signal-display">
+        <span class="signal-missing">Loading…</span>
+      </div>
+    </div>
+
+    <div class="countdown-wrap" id="countdown-wrap">
+      <div class="countdown-num" id="countdown-num">30</div>
+      <div class="countdown-right">
+        <div class="countdown-label" id="countdown-label">seconds to decide</div>
+        <div class="countdown-track">
+          <div class="countdown-fill" id="countdown-fill" style="width:100%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">Your Decision</div>
+    <div class="urn-hint">Blue Product: 2 red, 1 blue &nbsp;·&nbsp; Red Product: 2 blue, 1 red</div>
+    <div class="urn-buttons">
+      <button class="btn-urn" id="btn-a" onclick="submitDecision('A')" style="color:#1d4ed8; border-color:#93c5fd;">Blue Product</button>
+      <button class="btn-urn" id="btn-b" onclick="submitDecision('B')" style="color:#dc2626; border-color:#fca5a5;">Red Product</button>
+    </div>
+    <div class="decision-error" id="dec-error"></div>
+  </div>
+
+  <!-- ═══ SCREEN 4 — Thank you ════════════════════════ -->
+  <div id="screen-thanks" class="screen">
+    <div class="thanks-wrap">
+      <div class="thanks-icon">✓</div>
+      <div class="thanks-title">Thank you!</div>
+      <div class="thanks-sub">Your decision has been recorded.</div>
+    </div>
+    <div id="thanks-group-results" style="margin-top:28px;"></div>
+  </div>
+
+</div><!-- /.card -->
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+// ════════════════════════════════════════════════════════
+// Firebase config
+// ════════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey:            "AIzaSyBpZcHGN5qwxCnEL0dgrArjZC3oiD3mtZI",
+  authDomain:        "cascade-experiment.firebaseapp.com",
+  databaseURL:       "https://cascade-experiment-default-rtdb.firebaseio.com",
+  projectId:         "cascade-experiment",
+  storageBucket:     "cascade-experiment.firebasestorage.app",
+  messagingSenderId: "299151610265",
+  appId:             "1:299151610265:web:11efaf597bcad76aa3c308"
+};
+
+// ════════════════════════════════════════════════════════
+// Group configuration
+// ════════════════════════════════════════════════════════
+const GROUP_CONFIG = {
+  sequential_1: 8,
+  sequential_2: 8,
+  sequential_3: 8,
+  sequential_4: 8,
+  sequential_5: 8,
+  sequential_6: 8,
+  simultaneous: 17
+};
+
+// ════════════════════════════════════════════════════════
+// Timing constants
+// ════════════════════════════════════════════════════════
+const DECISION_TIMEOUT_SECS = 30;   // on-screen countdown for the student
+const POSITION_TIMEOUT_MS   = 30000; // 30 sec per sequential position from experiment start
+const MAX_SEQUENTIAL_SIZE   = 8;    // used for instructor timeline display
+
+// ════════════════════════════════════════════════════════
+// App state
+// ════════════════════════════════════════════════════════
+let db;
+let groupRef      = null;
+let myGroup       = null;
+let myPosition    = null;   // 1-indexed
+let isSequential  = false;
+let mySignal      = null;
+let decisionShown = false;
+let countdownInterval     = null;
+let countdownSecs         = DECISION_TIMEOUT_SECS;
+let countdownMaxSecs      = DECISION_TIMEOUT_SECS; // may be reduced to meet global deadline
+let experimentStart       = null;   // set when instructor clicks Start
+
+// Detect instructor / results mode via URL params
+const isInstructor = new URLSearchParams(window.location.search).has('instructor');
+const isResults    = new URLSearchParams(window.location.search).has('results');
+
+// ════════════════════════════════════════════════════════
+// Init
+// ════════════════════════════════════════════════════════
+firebase.initializeApp(firebaseConfig);
+db = firebase.database();
+
+// Subscribe to global experiment start time — all clients
+db.ref('meta/experiment_start').on('value', snap => {
+  experimentStart = snap.val();
+  if (isInstructor) renderInstructorTimeline();
+});
+
+// Periodically check deadlines:
+//   Instructor browser → checks ALL sequential groups (primary safety net)
+//   Student browser    → checks their own group (backup)
+setInterval(checkDeadlines, 10000);
+
+// Show correct initial screen
+if (isResults) {
+  showScreen('screen-results');
+  initResults();
+} else if (isInstructor) {
+  showScreen('screen-instructor');
+} else {
+  showScreen('screen-entry');
+}
+
+// ════════════════════════════════════════════════════════
+// Utilities
+// ════════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function groupLabel(key) {
+  return key === 'simultaneous'
+    ? 'Simultaneous Group'
+    : 'Sequential Group ' + key.split('_')[1];
+}
+
+function dbKey(i)        { return 'p' + i; }
+function fromDb(data, i) { return (data && data[dbKey(i)]) || null; }
+
+function fmtTime(ts) {
+  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+// ════════════════════════════════════════════════════════
+// SCREEN R — Results
+// ════════════════════════════════════════════════════════
+function initResults() {
+  // Widen the card for the results view
+  document.querySelector('.card').style.maxWidth = '960px';
+
+  const root = document.getElementById('results-root');
+  root.innerHTML = `
+    <div class="results-header">
+      <h1><span class="live-dot"></span>Experiment Results</h1>
+      <div class="subtitle">Live — updates automatically as students submit decisions.</div>
+    </div>
+    <div class="results-grid" id="results-grid"></div>`;
+
+  // Read active group count from Firebase (set by instructor at Start)
+  db.ref('meta/num_sequential_groups').once('value', snap => {
+    const numSeq = snap.val() || 6;
+    const activeGroups = [];
+    for (let i = 1; i <= numSeq; i++) activeGroups.push('sequential_' + i);
+    activeGroups.push('simultaneous');
+
+    const state = {}; // groupKey -> { signals: {}, decisions: {} }
+    activeGroups.forEach(gk => {
+      state[gk] = { signals: {}, decisions: {} };
+      db.ref('signals/' + gk).on('value', snap => {
+        state[gk].signals = snap.val() || {};
+        renderResultsGrid(state, activeGroups);
+      });
+      db.ref('experiment/' + gk).on('value', snap => {
+        state[gk].decisions = snap.val() || {};
+        renderResultsGrid(state, activeGroups);
+      });
+    });
+  });
+}
+
+function renderResultsGrid(state, activeGroups) {
+  const grid = document.getElementById('results-grid');
+  if (!grid) return;
+  const groups = activeGroups || Object.keys(GROUP_CONFIG);
+  grid.innerHTML = groups.map(gk => {
+    const size = GROUP_CONFIG[gk];
+    const sigs = state[gk].signals;
+    const decs = state[gk].decisions;
+    const isSim = gk === 'simultaneous';
+    const rows = Array.from({ length: size }, (_, i) => {
+      const key = 'p' + i;
+      const sig = sigs[key] || null;
+      const dec = decs[key] || null;
+      const sigHtml = sig
+        ? `<span class="sig-pill"><span class="sig-dot sig-${sig.toLowerCase()}"></span>${sig}</span>`
+        : `<span class="choice-pending">—</span>`;
+      let choiceHtml;
+      if (!dec) {
+        choiceHtml = `<span class="choice-pending">pending</span>`;
+      } else {
+        const label = dec.action === 'A' ? 'Blue Product' : 'Red Product';
+        const cls   = dec.action === 'A' ? 'choice-a' : 'choice-b';
+        choiceHtml  = `<span class="${cls}">${label}</span>`;
+      }
+      return `<tr><td>${i + 1}</td><td>${sigHtml}</td><td>${choiceHtml}</td></tr>`;
+    }).join('');
+
+    const decided = Object.keys(decs).length;
+    const pct = Math.round(decided / size * 100);
+    return `
+      <div class="results-group-card${isSim ? ' simultaneous' : ''}">
+        <div class="rg-title">${groupLabel(gk)} &nbsp;·&nbsp; ${decided}/${size} decided</div>
+        <table class="rg-table">
+          <thead><tr><th>Player</th><th>Signal</th><th>Choice</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════
+// SCREEN 0 — Instructor
+// ════════════════════════════════════════════════════════
+function instructorStart() {
+  const raw = parseInt(document.getElementById('num-groups-input').value, 10);
+  const numGroups = Math.min(6, Math.max(1, isNaN(raw) ? 6 : raw));
+  db.ref('meta/num_sequential_groups').set(numGroups);
+  // Write start time only once (transaction: write if not already set)
+  db.ref('meta/experiment_start').transaction(cur => cur === null ? Date.now() : cur);
+}
+
+function renderInstructorTimeline() {
+  const btn    = document.getElementById('btn-start');
+  const banner = document.getElementById('exp-running-banner');
+  const block  = document.getElementById('instructor-timeline');
+  const table  = document.getElementById('timeline-table');
+
+  const numGroupsInput = document.getElementById('num-groups-input');
+
+  if (!experimentStart) {
+    btn.disabled = false;
+    btn.textContent = 'Start Experiment →';
+    if (numGroupsInput) numGroupsInput.disabled = false;
+    banner.style.display = 'none';
+    block.style.display  = 'none';
+    return;
+  }
+
+  // Experiment is running
+  btn.disabled = true;
+  btn.textContent = 'Experiment Started ✓';
+  if (numGroupsInput) numGroupsInput.disabled = true;
+
+  const endTime = experimentStart + MAX_SEQUENTIAL_SIZE * POSITION_TIMEOUT_MS;
+  banner.style.display = 'block';
+  banner.innerHTML =
+    'Started at <strong>' + fmtTime(experimentStart) + '</strong>. ' +
+    'All positions auto-advance by <strong>' + fmtTime(endTime) + '</strong>.';
+
+  // Build timeline table
+  let html = '<tr><th>Position</th><th>Auto-advance deadline</th></tr>';
+  for (let i = 1; i <= MAX_SEQUENTIAL_SIZE; i++) {
+    const deadline = experimentStart + i * POSITION_TIMEOUT_MS;
+    const past     = Date.now() > deadline;
+    html +=
+      '<tr class="' + (past ? 'fired' : '') + '">' +
+        '<td>Player ' + i + '</td>' +
+        '<td>' + fmtTime(deadline) + (past ? ' (fired)' : '') + '</td>' +
+      '</tr>';
+  }
+  table.innerHTML = html;
+  block.style.display = 'block';
+}
+
+// ════════════════════════════════════════════════════════
+// Deadline checking
+// Called every 10s (setInterval) and on each Firebase update
+// ════════════════════════════════════════════════════════
+function checkDeadlines() {
+  if (!experimentStart) return;
+  if (isInstructor) {
+    // Instructor checks ALL sequential groups
+    Object.keys(GROUP_CONFIG).forEach(key => {
+      if (key !== 'simultaneous') checkGroupDeadlines(key, null);
+    });
+    renderInstructorTimeline(); // keep table current
+  } else if (myGroup && isSequential) {
+    // Students check their own group only (backup)
+    checkGroupDeadlines(myGroup, null);
+  }
+}
+
+// Pass `data` to avoid an extra Firebase read when called from handleStateUpdate.
+// Pass `null` to trigger a fresh read (used by setInterval).
+function checkGroupDeadlines(groupKey, data) {
+  if (!experimentStart) return;
+
+  const doCheck = d => {
+    const size = GROUP_CONFIG[groupKey];
+    const ref  = db.ref('experiment/' + groupKey);
+    const now  = Date.now();
+    for (let i = 0; i < size; i++) {
+      const deadline = experimentStart + (i + 1) * POSITION_TIMEOUT_MS;
+      if (now > deadline && !fromDb(d, i)) {
+        ref.child(dbKey(i)).transaction(current => {
+          if (current !== null) return; // already written, abort transaction
+          return { action: Math.random() < 0.5 ? 'A' : 'B', signal: null, auto: true, timestamp: Date.now() };
+        });
+      }
+    }
+  };
+
+  if (data !== null) {
+    doCheck(data);
+  } else {
+    db.ref('experiment/' + groupKey).once('value', snap => doCheck(snap.val() || {}));
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// SCREEN 1 — Entry
+// ════════════════════════════════════════════════════════
+function startExperiment() {
+  const groupKey = document.getElementById('group-select').value;
+  const posRaw   = document.getElementById('position-input').value;
+  const pos      = parseInt(posRaw, 10);
+  const errEl    = document.getElementById('entry-error');
+  errEl.textContent = '';
+
+  if (!groupKey)          { errEl.textContent = 'Please select your group.'; return; }
+  if (!posRaw || pos < 1) { errEl.textContent = 'Please enter your position number.'; return; }
+  const max = GROUP_CONFIG[groupKey];
+  if (pos > max) { errEl.textContent = `Position must be between 1 and ${max} for this group.`; return; }
+
+  myGroup      = groupKey;
+  myPosition   = pos;
+  isSequential = groupKey !== 'simultaneous';
+  groupRef     = db.ref('experiment/' + myGroup);
+
+  // Fetch signal first, then subscribe — ensures signal is available when decision screen renders
+  db.ref('signals/' + myGroup + '/' + dbKey(pos - 1))
+    .once('value', snap => {
+      mySignal = snap.val();
+      groupRef.on('value', snapshot => handleStateUpdate(snapshot.val() || {}));
+    });
+}
+
+// ════════════════════════════════════════════════════════
+// Main handler — fires on every Firebase group change
+// ════════════════════════════════════════════════════════
+function handleStateUpdate(data) {
+  const size      = GROUP_CONFIG[myGroup];
+  const decisions = Array.from({ length: size }, (_, i) => fromDb(data, i));
+  const myIdx     = myPosition - 1;
+
+  // Check deadlines inline (using already-fetched data — no extra DB read)
+  if (isSequential) checkGroupDeadlines(myGroup, data);
+
+  // Already submitted?
+  if (decisions[myIdx]) {
+    stopCountdown();
+    showScreen('screen-thanks');
+    initThanksResults();
+    return;
+  }
+
+  if (!isSequential) {
+    if (!decisionShown) { decisionShown = true; renderDecision(decisions); }
+    return;
+  }
+
+  const priorDone = decisions.slice(0, myIdx).every(d => d !== null);
+  if (priorDone) {
+    if (!decisionShown) { decisionShown = true; renderDecision(decisions); }
+  } else {
+    renderWaiting(decisions);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// SCREEN 2 — Waiting
+// ════════════════════════════════════════════════════════
+function renderWaiting(decisions) {
+  showScreen('screen-waiting');
+
+  document.getElementById('wait-title').textContent =
+    'Player ' + myPosition + ' — ' + groupLabel(myGroup);
+
+  const pending = [];
+  for (let i = 0; i < myPosition - 1; i++) {
+    if (!decisions[i]) pending.push(i + 1);
+  }
+  const s = pending.length === 1 ? '' : 's';
+  document.getElementById('wait-msg').textContent =
+    'Waiting for Player' + s + ' ' + pending.join(', ') + ' to decide.';
+
+  const dotsEl = document.getElementById('progress-dots');
+  dotsEl.innerHTML = '';
+  decisions.forEach((d, i) => {
+    const dot = document.createElement('div');
+    if (i === myPosition - 1) {
+      dot.className = 'dot dot-me'; dot.textContent = i + 1;
+    } else if (d) {
+      dot.className = d.action === 'A' ? 'dot dot-blue' : 'dot dot-red';
+      dot.textContent = d.action === 'A' ? 'B' : 'R';
+    } else {
+      dot.className = 'dot dot-pending'; dot.textContent = i + 1;
+    }
+    dotsEl.appendChild(dot);
+  });
+}
+
+// ════════════════════════════════════════════════════════
+// SCREEN 3 — Decision (rendered only once per student)
+// ════════════════════════════════════════════════════════
+function renderDecision(decisions) {
+  showScreen('screen-decision');
+
+  document.getElementById('dec-title').textContent =
+    groupLabel(myGroup) + ' — Player ' + myPosition;
+
+  // Prior decisions
+  const priorEl = document.getElementById('prior-section');
+  if (!isSequential) {
+    priorEl.innerHTML =
+      '<div class="section-label">Prior Decisions</div>' +
+      '<p class="note-text">You are in the simultaneous group — you do not observe others\' decisions.</p>';
+  } else {
+    const prior = decisions.slice(0, myPosition - 1);
+    if (prior.length === 0) {
+      priorEl.innerHTML =
+        '<div class="section-label">Prior Decisions</div>' +
+        '<p class="note-text">You are Player 1 — no prior decisions to observe.</p>';
+    } else {
+      let html = '<div class="section-label">Prior Decisions</div><div class="prior-box">';
+      prior.forEach((d, i) => {
+        html +=
+          '<div class="decision-row">' +
+            '<span class="pl">Player ' + (i + 1) + '</span>' +
+            (d ? (d.action === 'A'
+              ? '<span class="urn" style="color:#1d4ed8;">Blue Product</span>'
+              : '<span class="urn" style="color:#dc2626;">Red Product</span>')
+              : '<span class="urn">—</span>') +
+          '</div>';
+      });
+      html += '</div>';
+      priorEl.innerHTML = html;
+    }
+  }
+
+  renderSignal();
+  startCountdown();
+}
+
+// ════════════════════════════════════════════════════════
+// Signal display (read-only, from /signals/ in Firebase)
+// ════════════════════════════════════════════════════════
+function renderSignal() {
+  const el = document.getElementById('signal-display');
+  if (!mySignal) {
+    el.innerHTML = '<span class="signal-missing">Signal not found. Check your group and position number.</span>';
+    return;
+  }
+  const color = mySignal === 'Red' ? '#ef4444' : '#3b82f6';
+  el.innerHTML =
+    '<span class="signal-ball" style="background:' + color + ';box-shadow:0 0 0 2px white,0 0 0 3px ' + color + ';"></span>' +
+    '<span class="signal-text">' + mySignal + ' seems better</span>';
+}
+
+// ════════════════════════════════════════════════════════
+// Countdown timer
+//
+// The countdown starts at min(30s, time remaining until global deadline).
+// This ensures the visual timer never promises more time than is available.
+// ════════════════════════════════════════════════════════
+function getInitialCountdownSecs() {
+  if (!experimentStart || !isSequential) return DECISION_TIMEOUT_SECS;
+  const globalDeadlineMs  = experimentStart + myPosition * POSITION_TIMEOUT_MS;
+  const secsUntilDeadline = Math.floor((globalDeadlineMs - Date.now()) / 1000);
+  return Math.min(DECISION_TIMEOUT_SECS, Math.max(1, secsUntilDeadline));
+}
+
+function startCountdown() {
+  countdownMaxSecs = getInitialCountdownSecs();
+  countdownSecs    = countdownMaxSecs;
+  updateCountdownUI();
+
+  countdownInterval = setInterval(() => {
+    countdownSecs--;
+    updateCountdownUI();
+    if (countdownSecs <= 0) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+      autoSubmit();
+    }
+  }, 1000);
+}
+
+function stopCountdown() {
+  if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+}
+
+function updateCountdownUI() {
+  const numEl  = document.getElementById('countdown-num');
+  const fillEl = document.getElementById('countdown-fill');
+  const wrapEl = document.getElementById('countdown-wrap');
+  const lblEl  = document.getElementById('countdown-label');
+  if (!numEl) return;
+
+  numEl.textContent  = countdownSecs;
+  fillEl.style.width = (countdownSecs / countdownMaxSecs * 100) + '%';
+
+  if (countdownSecs <= 10) {
+    wrapEl.classList.add('urgent');
+    lblEl.textContent = 'seconds left — decide now!';
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// Auto-submit when countdown expires
+// ════════════════════════════════════════════════════════
+function autoSubmit() {
+  document.getElementById('btn-a').disabled = true;
+  document.getElementById('btn-b').disabled = true;
+
+  groupRef.child(dbKey(myPosition - 1)).set({
+    action:    Math.random() < 0.5 ? 'A' : 'B',
+    signal:    mySignal,
+    auto:      true,
+    timestamp: Date.now()
+  });
+  // Firebase listener fires → handleStateUpdate → screen-thanks
+}
+
+// ════════════════════════════════════════════════════════
+// SCREEN 4 — Thank-you group results
+// ════════════════════════════════════════════════════════
+let thanksResultsInit = false;
+
+function initThanksResults() {
+  if (thanksResultsInit) return;
+  thanksResultsInit = true;
+
+  // Widen card so the table has room
+  document.querySelector('.card').style.maxWidth = '600px';
+
+  const size  = GROUP_CONFIG[myGroup];
+  const state = { signals: {}, decisions: {} };
+
+  db.ref('signals/' + myGroup).on('value', snap => {
+    state.signals = snap.val() || {};
+    renderThanksGroup(state, size);
+  });
+  db.ref('experiment/' + myGroup).on('value', snap => {
+    state.decisions = snap.val() || {};
+    renderThanksGroup(state, size);
+  });
+}
+
+function renderThanksGroup(state, size) {
+  const container = document.getElementById('thanks-group-results');
+  if (!container) return;
+
+  const sigs    = state.signals;
+  const decs    = state.decisions;
+  const decided = Object.keys(decs).length;
+
+  const rows = Array.from({ length: size }, (_, i) => {
+    const key = 'p' + i;
+    const sig = sigs[key] || null;
+    const dec = decs[key] || null;
+    const isMe = (i === myPosition - 1);
+
+    const sigHtml = sig
+      ? `<span class="sig-pill"><span class="sig-dot sig-${sig.toLowerCase()}"></span>${sig}</span>`
+      : `<span class="choice-pending">—</span>`;
+
+    let choiceHtml;
+    if (!dec) {
+      choiceHtml = `<span class="choice-pending">pending</span>`;
+    } else {
+      const label = dec.action === 'A' ? 'Blue Product' : 'Red Product';
+      const cls   = dec.action === 'A' ? 'choice-a' : 'choice-b';
+      choiceHtml  = `<span class="${cls}">${label}</span>`;
+    }
+
+    const rowStyle = isMe ? ' style="background:#f0fdf4;"' : '';
+    const meMarker = isMe ? ' <span style="font-size:0.72rem;color:#15803d;font-weight:600;">YOU</span>' : '';
+    return `<tr${rowStyle}><td>${i + 1}${meMarker}</td><td>${sigHtml}</td><td>${choiceHtml}</td></tr>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="section-label">${groupLabel(myGroup)} &nbsp;·&nbsp; ${decided}/${size} decided</div>
+    <table class="rg-table">
+      <thead><tr><th>Player</th><th>Signal</th><th>Choice</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ════════════════════════════════════════════════════════
+// Manual submit
+// ════════════════════════════════════════════════════════
+function submitDecision(urnChoice) {
+  stopCountdown();
+  document.getElementById('btn-a').disabled = true;
+  document.getElementById('btn-b').disabled = true;
+  document.getElementById('dec-error').textContent = '';
+
+  groupRef.child(dbKey(myPosition - 1)).set({
+    action:    urnChoice,
+    signal:    mySignal,
+    auto:      false,
+    timestamp: Date.now()
+  }).catch(() => {
+    document.getElementById('dec-error').textContent =
+      'Could not save your decision. Check your connection and try again.';
+    document.getElementById('btn-a').disabled = false;
+    document.getElementById('btn-b').disabled = false;
+  });
+}
+</script>
+</body>
+</html>
