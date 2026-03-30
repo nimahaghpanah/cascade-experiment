@@ -653,11 +653,14 @@ function renderResultsGrid(state, activeGroups) {
 // SCREEN 0 — Instructor
 // ════════════════════════════════════════════════════════
 function wipeData() {
-  // Wipe experiment data while experimentStart is still null/old —
-  // checkDeadlines returns early when experimentStart is null, so no race condition.
   experimentStart = null;
-  db.ref('experiment').set(null);
-  db.ref('meta/experiment_start').set(null);
+  // Clear experiment_start FIRST and wait for Firebase to confirm before clearing
+  // experiment data. This ensures all connected student browsers process
+  // experimentStart=null before their handleStateUpdate fires with empty data —
+  // preventing them from auto-advancing during the wipe.
+  db.ref('meta/experiment_start').set(null).then(() => {
+    db.ref('experiment').set(null);
+  });
   const msg = document.getElementById('wipe-confirm');
   msg.style.display = 'block';
   setTimeout(() => msg.style.display = 'none', 3000);
