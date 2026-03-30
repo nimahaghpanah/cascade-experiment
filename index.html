@@ -699,7 +699,7 @@ function renderInstructorTimeline() {
   btn.textContent = 'Restart Experiment →';
   if (numGroupsInput) numGroupsInput.disabled = false;
 
-  const endTime = experimentStart + MAX_SEQUENTIAL_SIZE * POSITION_TIMEOUT_MS;
+  const endTime = positionDeadlineMs(MAX_SEQUENTIAL_SIZE);
   banner.style.display = 'block';
   banner.innerHTML =
     'Started at <strong>' + fmtTime(experimentStart) + '</strong>. ' +
@@ -708,7 +708,7 @@ function renderInstructorTimeline() {
   // Build timeline table
   let html = '<tr><th>Position</th><th>Auto-advance deadline</th></tr>';
   for (let i = 1; i <= MAX_SEQUENTIAL_SIZE; i++) {
-    const deadline = experimentStart + i * POSITION_TIMEOUT_MS;
+    const deadline = positionDeadlineMs(i);
     const past     = Date.now() > deadline;
     html +=
       '<tr class="' + (past ? 'fired' : '') + '">' +
@@ -738,6 +738,11 @@ function checkDeadlines() {
   }
 }
 
+// Position deadline: player 1 gets 60s, all others get 30s each after that.
+function positionDeadlineMs(pos) {
+  return experimentStart + 60000 + (pos - 1) * POSITION_TIMEOUT_MS;
+}
+
 // Pass `data` to avoid an extra Firebase read when called from handleStateUpdate.
 // Pass `null` to trigger a fresh read (used by setInterval).
 function checkGroupDeadlines(groupKey, data) {
@@ -748,11 +753,16 @@ function checkGroupDeadlines(groupKey, data) {
     const ref  = db.ref('experiment/' + groupKey);
     const now  = Date.now();
     for (let i = 0; i < size; i++) {
-      const deadline = experimentStart + (i + 1) * POSITION_TIMEOUT_MS;
+      const deadline = positionDeadlineMs(i + 1);
       if (now > deadline && !fromDb(d, i)) {
-        ref.child(dbKey(i)).transaction(current => {
-          if (current !== null) return; // already written, abort transaction
-          return { action: Math.random() < 0.5 ? 'A' : 'B', signal: null, auto: true, timestamp: Date.now() };
+        // Read signal and follow it for auto-advance
+        db.ref('signals/' + groupKey + '/p' + i).once('value', sigSnap => {
+          const sig    = sigSnap.val();
+          const action = sig === 'Blue' ? 'A' : (sig === 'Red' ? 'B' : (Math.random() < 0.5 ? 'A' : 'B'));
+          ref.child(dbKey(i)).transaction(current => {
+            if (current !== null) return; // already written, abort transaction
+            return { action, signal: sig, auto: true, timestamp: Date.now() };
+          });
         });
       }
     }
@@ -922,10 +932,11 @@ function renderSignal() {
 // This ensures the visual timer never promises more time than is available.
 // ════════════════════════════════════════════════════════
 function getInitialCountdownSecs() {
-  if (!experimentStart || !isSequential) return DECISION_TIMEOUT_SECS;
-  const globalDeadlineMs  = experimentStart + myPosition * POSITION_TIMEOUT_MS;
+  const maxSecs = (isSequential && myPosition === 1) ? 60 : DECISION_TIMEOUT_SECS;
+  if (!experimentStart || !isSequential) return maxSecs;
+  const globalDeadlineMs  = positionDeadlineMs(myPosition);
   const secsUntilDeadline = Math.floor((globalDeadlineMs - Date.now()) / 1000);
-  return Math.min(DECISION_TIMEOUT_SECS, Math.max(1, secsUntilDeadline));
+  return Math.min(maxSecs, Math.max(1, secsUntilDeadline));
 }
 
 function startCountdown() {
@@ -972,7 +983,7 @@ function autoSubmit() {
   document.getElementById('btn-b').disabled = true;
 
   groupRef.child(dbKey(myPosition - 1)).set({
-    action:    Math.random() < 0.5 ? 'A' : 'B',
+    action:    mySignal === 'Blue' ? 'A' : (mySignal === 'Red' ? 'B' : (Math.random() < 0.5 ? 'A' : 'B')),
     signal:    mySignal,
     auto:      true,
     timestamp: Date.now()
